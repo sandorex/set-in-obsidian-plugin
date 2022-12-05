@@ -1,16 +1,12 @@
-import { Calendar } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import listPlugin from '@fullcalendar/list';
-import timeGridPlugin from '@fullcalendar/timegrid';
+import Calendar from '@event-calendar/core';
+import "@event-calendar/core/index.css";
+import TimeGrid from '@event-calendar/time-grid';
 import { View, WorkspaceLeaf } from "obsidian";
-// import 'vis-timeline/dist/vis-timeline-graph2d.min.css';
-import '@fullcalendar/common/main.min.css';
-import '@fullcalendar/daygrid/main.min.css';
-import '@fullcalendar/list/main.min.css';
-import '@fullcalendar/timegrid/main.min.css';
 import { TIMELINE_VIEW_TYPE } from "./main";
 
 export class TimelineView extends View {
+	calendar?: any = null;
+
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
 		this.navigation = false;
@@ -26,26 +22,32 @@ export class TimelineView extends View {
 			text: "Set In Obsidian Timeline"
 		});
 
-		this.containerEl.createEl("div", {}, elem => {
-			let calendar = new Calendar(elem, {
-				plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
-				initialView: 'dayGridMonth',
-				headerToolbar: {
-					left: 'prev,next today',
-					center: 'title',
-					right: 'dayGridMonth,timeGridWeek,listWeek'
-				}
-			});
+		this.containerEl.createDiv({ cls: "set-in-obsidian-wrapper", }, wrapper =>
+			wrapper.createDiv({ cls: "set-in-obsidian-timeline", }, elem => {
+				this.calendar = new Calendar({
+					target: elem,
+					props: {
+						plugins: [TimeGrid],
+						options: {
+							view: 'timeGridWeek',
+							allDaySlot: false,
+							eventClick: (info: any) => {
+								console.log("clicked", info.event, info.event.extendedProps);
+							}
+						}
+					}
+				});
 
-			// 	var items = new DataSet([
-			// 		{ id: 1, content: 'item 1', start: '22:00', end: '22:30' },
-			// 		{ id: 2, content: 'item 2', start: '22:35', end: '23:00' },
-			// 	]);
-
-			// 	var options = {};
-
-			// 	var timeline = new Timeline(elem, items, options);
-		});
+				this.calendar.addEvent({
+					start: window.moment().toDate(),
+					end: window.moment().add(30, "minutes").toDate(),
+					title: "fuck yeah",
+					extendedProps: {
+						name: "event numero uno",
+					}
+				})
+			})
+		);
 	}
 
 	getViewType(): string {

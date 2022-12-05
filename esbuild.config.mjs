@@ -1,6 +1,6 @@
 import builtins from 'builtin-modules';
 import esbuild from "esbuild";
-import { rename } from "fs";
+import { rename, unlinkSync } from "fs";
 import process from "process";
 
 const banner =
@@ -50,7 +50,10 @@ esbuild.build({
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
 	outfile: 'main.js',
-}).then(_ => {
+}).finally(_ => {
+	// the old css file keeps staying so im deleting to prevent confusion
+	unlinkSync("styles.css");
+
 	// obsidian requires that the css is named styles.css but esbuild names it main.css...
 	rename("main.css", "styles.css", (err) => {
 		if (err)

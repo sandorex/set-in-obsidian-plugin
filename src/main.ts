@@ -3,6 +3,14 @@ import { DEFAULT_SETTINGS, SetInObsidianSettings, SetInObsidianSettingsTab } fro
 import "./styles.css";
 import { TimelineView } from "./view";
 
+import type moment from "moment";
+
+declare global {
+	interface Window {
+		moment: typeof moment;
+	}
+}
+
 export const TIMELINE_VIEW_TYPE = "set-in-obsidian-timeline";
 
 export default class SetInObsidianPlugin extends Plugin {
@@ -32,7 +40,7 @@ export default class SetInObsidianPlugin extends Plugin {
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
 
-		this.app.workspace.getRightLeaf(false).setViewState({
+		await this.app.workspace.getRightLeaf(false).setViewState({
 			type: TIMELINE_VIEW_TYPE,
 			active: true,
 		});

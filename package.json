@@ -12,6 +12,8 @@
 	"author": "Sandorex",
 	"license": "MIT",
 	"devDependencies": {
+		"@event-calendar/core": "^0.14.0",
+		"@event-calendar/time-grid": "^0.14.0",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "^5.2.0",
 		"@typescript-eslint/parser": "^5.2.0",
@@ -19,14 +21,7 @@
 		"esbuild": "0.13.12",
 		"obsidian": "latest",
 		"tslib": "2.3.1",
-		"typescript": "4.4.4"
-	},
-	"dependencies": {
-		"@fullcalendar/core": "^5.11.3",
-		"@fullcalendar/daygrid": "^5.11.3",
-		"@fullcalendar/list": "^5.11.3",
-		"@fullcalendar/timegrid": "^5.11.3",
-		"vis-data": "^7.1.4",
-		"vis-timeline": "^7.7.0"
+		"typescript": "4.4.4",
+        "@types/moment": "2.13.0"
 	}
 }
