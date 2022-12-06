@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { ListItemCache, Plugin, TFile } from "obsidian";
 import { DEFAULT_SETTINGS, SetInObsidianSettings, SetInObsidianSettingsTab } from "./settings";
 import { TimelineView } from "./view";
 
@@ -11,27 +11,39 @@ declare global {
 }
 
 export const TIMELINE_VIEW_TYPE = "set-in-obsidian-timeline";
+export const TIMELINE_VIEW_ICON = "calendar-clock";
+
+/** Generator that chains two arrays together into one generator
+ *
+ *  `array2` must be equal or larger in length than `array1`
+ */
+function* chain<K, V>(array1: K[], array2: V[]): Generator<[K, V]> {
+	for (let i = 0; i < array1.length; i++) {
+		yield [array1[i], array2[i]];
+	}
+}
 
 export default class SetInObsidianPlugin extends Plugin {
 	settings: SetInObsidianSettings;
+	timelineView?: TimelineView;
+
+	async read_files(files: TFile[]): Promise<Map<TFile, String>> {
+		return Promise.all(files.map(file => app.vault.cachedRead(file))).then(fileContents =>
+			new Map<TFile, String>(chain(files, fileContents))
+		);
+	}
+
+	// TODO:
+	async read_list_items(files: TFile[]): Promise<Map<TFile, [ListItemCache, String]>> {
+		return Promise.reject()
+	}
 
 	async onload() {
 		await this.loadSettings();
 
-		this.registerView(TIMELINE_VIEW_TYPE, leaf => new TimelineView(leaf));
+		this.registerView(TIMELINE_VIEW_TYPE, leaf => new TimelineView(leaf, this));
 
-		this.addRibbonIcon("calendar-clock", "Set In Obsidian Timeline", () => {
-			this.activateView();
-		});
-
-		// this.addCommand({
-		// 	id: "nuke-orphaned-attachments",
-		// 	name: "Trash orphaned attachments",
-		// 	callback: () => {
-		// 		console.log(this.app.metadataCache.getFileCache(this.app.workspace.getActiveFile()))
-		// 		// this.app.workspace.getActiveFile()
-		// 	},
-		// });
+		this.addRibbonIcon(TIMELINE_VIEW_ICON, "SIO Timeline", () => this.activateView());
 
 		this.addSettingTab(new SetInObsidianSettingsTab(this.app, this));
 	}
@@ -44,14 +56,7 @@ export default class SetInObsidianPlugin extends Plugin {
 			active: true,
 		});
 
-		// this.app.workspace.getLeaf("split", "horizontal").setViewState({
-		// 	type: TIMELINE_VIEW_TYPE,
-		// 	active: true,
-		// });
-
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE)[0]
-		);
+		this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE)[0]);
 	}
 
 	onunload() {

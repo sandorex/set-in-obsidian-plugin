@@ -3,18 +3,22 @@ import DayGrid from '@event-calendar/day-grid';
 import ListGrid from '@event-calendar/list';
 import TimeGrid from '@event-calendar/time-grid';
 import { View, WorkspaceLeaf } from "obsidian";
-import { TIMELINE_VIEW_TYPE } from "./main";
+import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from "./main";
 
 export class TimelineView extends View {
+	plugin: SetInObsidianPlugin;
 	calendar?: any = null;
 
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(leaf: WorkspaceLeaf, plugin: SetInObsidianPlugin) {
 		super(leaf);
-		this.navigation = false;
-		this.icon = "calendar-clock";
+		this.plugin = plugin;
+		this.navigation = true;
+		this.icon = TIMELINE_VIEW_ICON;
 	}
 
 	async onOpen(): Promise<void> {
+		this.plugin.timelineView = this;
+
 		this.containerEl.empty();
 		this.containerEl.createEl("h3", {
 			attr: {
@@ -23,6 +27,7 @@ export class TimelineView extends View {
 			text: "Set In Obsidian"
 		});
 
+		// the calendar is contained inside the wrapper so it overflows and you can scroll
 		this.containerEl.createDiv({ cls: "set-in-obsidian-wrapper", }, wrapper =>
 			wrapper.createDiv({ cls: "set-in-obsidian-timeline", }, elem => {
 				this.calendar = new Calendar({
@@ -62,17 +67,12 @@ export class TimelineView extends View {
 						}
 					}
 				});
-
-				this.calendar.addEvent({
-					start: window.moment().toDate(),
-					end: window.moment().add(30, "minutes").toDate(),
-					title: "fuck yeah",
-					extendedProps: {
-						name: "event numero uno",
-					}
-				})
 			})
 		);
+	}
+
+	async onClose(): Promise<void> {
+		this.plugin.timelineView = null;
 	}
 
 	getViewType(): string {
@@ -80,6 +80,6 @@ export class TimelineView extends View {
 	}
 
 	getDisplayText(): string {
-		return "Timeline";
+		return "SIO Timeline";
 	}
 }
