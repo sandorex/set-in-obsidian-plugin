@@ -1,6 +1,5 @@
 import { Plugin } from "obsidian";
 import { DEFAULT_SETTINGS, SetInObsidianSettings, SetInObsidianSettingsTab } from "./settings";
-import "./styles.css";
 import { TimelineView } from "./view";
 
 import type moment from "moment";

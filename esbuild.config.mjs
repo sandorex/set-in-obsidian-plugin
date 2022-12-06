@@ -1,6 +1,5 @@
 import builtins from 'builtin-modules';
 import esbuild from "esbuild";
-import { rename, unlinkSync } from "fs";
 import process from "process";
 
 const banner =
@@ -11,6 +10,15 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === 'production');
+
+esbuild.build({
+	banner: { css: banner, },
+	entryPoints: ['css/main.css'],
+	bundle: true,
+	watch: !prod,
+	logLevel: "info",
+	outfile: 'styles.css',
+}).catch(() => process.exit(1));
 
 esbuild.build({
 	banner: {
@@ -50,13 +58,4 @@ esbuild.build({
 	sourcemap: prod ? false : 'inline',
 	treeShaking: true,
 	outfile: 'main.js',
-}).finally(_ => {
-	// the old css file keeps staying so im deleting to prevent confusion
-	unlinkSync("styles.css");
-
-	// obsidian requires that the css is named styles.css but esbuild names it main.css...
-	rename("main.css", "styles.css", (err) => {
-		if (err)
-			throw err;
-	});
 }).catch(() => process.exit(1));

@@ -1,5 +1,6 @@
 import Calendar from '@event-calendar/core';
-import "@event-calendar/core/index.css";
+import DayGrid from '@event-calendar/day-grid';
+import ListGrid from '@event-calendar/list';
 import TimeGrid from '@event-calendar/time-grid';
 import { View, WorkspaceLeaf } from "obsidian";
 import { TIMELINE_VIEW_TYPE } from "./main";
@@ -19,7 +20,7 @@ export class TimelineView extends View {
 			attr: {
 				"style": "text-align: center;",
 			},
-			text: "Set In Obsidian Timeline"
+			text: "Set In Obsidian"
 		});
 
 		this.containerEl.createDiv({ cls: "set-in-obsidian-wrapper", }, wrapper =>
@@ -27,10 +28,34 @@ export class TimelineView extends View {
 				this.calendar = new Calendar({
 					target: elem,
 					props: {
-						plugins: [TimeGrid],
+						plugins: [TimeGrid, DayGrid, ListGrid],
 						options: {
-							view: 'timeGridWeek',
+							view: 'listWeek',
 							allDaySlot: false,
+							nowIndicator: true,
+							headerToolbar: {
+								start: 'prev,next today',
+								center: 'title',
+								end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+							},
+							buttonText: {
+								today: 'Today',
+								dayGridMonth: 'Month',
+								listDay: 'List',
+								listWeek: 'List',
+								listMonth: 'List',
+								listYear: 'List',
+								resourceTimeGridDay: 'Day',
+								resourceTimeGridWeek: 'Week',
+								timeGridDay: 'Day',
+								timeGridWeek: 'Week'
+							},
+							// sets class names for html elements
+							theme: (theme: any) => {
+								// remove today highlighting, easier than doing css
+								theme.today = '';
+								return theme;
+							},
 							eventClick: (info: any) => {
 								console.log("clicked", info.event, info.event.extendedProps);
 							}

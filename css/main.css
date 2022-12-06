@@ -1,3 +1,9 @@
+/* @event-calendar library theming */
+@import url(@event-calendar/core/index.css);
+
+/* other files */
+@import url(./calendar-dark-theme.css);
+
 .set-in-obsidian-wrapper {
     overflow-y: scroll;
     width: 100%;
@@ -8,4 +14,5 @@
     margin-left: auto;
     margin-right: auto;
     width: 95%;
+    padding-bottom: 10px;
 }

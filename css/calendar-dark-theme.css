@@ -1,0 +1,11 @@
+.ec-button {
+    color: white !important;
+}
+
+.ec-button:hover, .ec-active {
+    background-color: gray !important;
+}
+
+.ec-day {
+    background-color: transparent !important;
+}
