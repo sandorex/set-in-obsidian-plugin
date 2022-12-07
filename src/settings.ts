@@ -1,5 +1,5 @@
-import { App, PluginSettingTab } from "obsidian";
-import SetInObsidianPlugin from "./main";
+import { App, PluginSettingTab } from 'obsidian';
+import SetInObsidianPlugin from './main';
 
 export interface SetInObsidianSettings {
 }
@@ -20,11 +20,11 @@ export class SetInObsidianSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h3", {
+		containerEl.createEl('h3', {
 			attr: {
-				"style": "text-align: center;",
+				'style': 'text-align: center;',
 			},
-			text: "Set In Obsidian Plugin Settings"
+			text: 'Set In Obsidian Plugin Settings'
 		});
 	}
 }

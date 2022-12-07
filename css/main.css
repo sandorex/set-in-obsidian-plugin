@@ -4,6 +4,11 @@
 /* other files */
 @import url(./calendar-dark-theme.css);
 
+.set-in-obsidian-wrapper > h3,
+.set-in-obsidian-wrapper > h4 {
+    text-align: center;
+}
+
 .set-in-obsidian-wrapper {
     overflow-y: scroll;
     width: 100%;

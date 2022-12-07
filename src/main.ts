@@ -1,18 +1,17 @@
-import { ListItemCache, Plugin, TFile } from "obsidian";
-import { DEFAULT_SETTINGS, SetInObsidianSettings, SetInObsidianSettingsTab } from "./settings";
-import { TimelineView } from "./view";
+import { ListItemCache, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
+import { EventPeriod } from './parser';
+import { DEFAULT_SETTINGS, SetInObsidianSettings } from './settings';
+import { TimelineView } from './view';
 
-import type moment from "moment";
-import { EventPeriod } from "./parser";
-
+import type moment from 'moment';
 declare global {
 	interface Window {
 		moment: typeof moment;
 	}
 }
 
-export const TIMELINE_VIEW_TYPE = "set-in-obsidian-timeline";
-export const TIMELINE_VIEW_ICON = "calendar-clock";
+export const TIMELINE_VIEW_TYPE = 'set-in-obsidian-timeline';
+export const TIMELINE_VIEW_ICON = 'calendar-clock';
 
 /** Generator that chains two arrays together into one generator
  *
@@ -41,7 +40,12 @@ export default class SetInObsidianPlugin extends Plugin {
 
 		// extract each item as string
 		fileContents.forEach((contents, file) => {
-			items.set(file, this.app.metadataCache.getFileCache(file).listItems.map(item => {
+			const cache = this.app.metadataCache.getFileCache(file);
+
+			if (cache.listItems == null)
+				return;
+
+			items.set(file, cache.listItems.map(item => {
 				// all list items start with '- '
 				var offset = 2;
 
@@ -59,66 +63,74 @@ export default class SetInObsidianPlugin extends Plugin {
 		return items;
 	}
 
+	async getAllEvents(): Promise<CalendarEvent[]> {
+		const listItems = await this.getListItems(this.app.vault.getMarkdownFiles());
+
+		var events: CalendarEvent[] = [];
+
+		for (const [file, items] of listItems) {
+			for (const [metadata, rawText] of items) {
+				const parseResults = EventPeriod.parse(rawText);
+
+				if (parseResults == null)
+					continue;
+
+				const [period, itemText] = parseResults;
+
+				// TODO: make a new event class
+				var event: CalendarEvent = {
+					title: itemText,
+					start: period.start,
+					allDay: period.isAllDay(),
+					extendedProps: {
+						// TODO to be used for going to the list item
+						file: file,
+						line: metadata.position.start.line,
+						offset: metadata.position.start.offset
+					}
+				};
+
+				if (!period.isAllDay())
+					event.end = period.end;
+
+				// TODO: for now all completed tasks are green
+				if (metadata.task != ' ')
+					event.backgroundColor = 'green';
+
+				events.push(event);
+			}
+		}
+
+		return events;
+	}
+
 	async onload() {
 		await this.loadSettings();
 
-		this.registerView(TIMELINE_VIEW_TYPE, leaf => new TimelineView(leaf, this));
-
-		this.addRibbonIcon(TIMELINE_VIEW_ICON, "SIO Timeline", () => this.activateView());
-
-		this.addCommand({
-			id: "set-in-obsidian-test",
-			name: "Test command",
-			callback: async () => {
-				const file = this.app.workspace.getActiveFile();
-
-				if (file == null) {
-					console.log("file is null");
-					return;
-				}
-
-				const items = await this.getListItems([file]);
-
-				// TODO: it adds each item twice for some reason..
-				for (const [file, itemInfos] of items) {
-					itemInfos.forEach(([cache, item]) => {
-						const results = EventPeriod.parse(item);
-
-						if (results != null) {
-							console.log(results);
-							const period = results[0];
-							const leftover = results[1];
-
-							// TODO: some cleaner way to convert period into event object
-							var event: Record<string, any> = {
-								title: leftover,
-								start: period.start,
-								allDay: period.isAllDay(),
-								// start: period.start,
-								// backgroundColor: cache.task == ' ' ? null : 'green',
-							};
-
-							if (!period.isAllDay())
-								event.end = period.end;
-
-							this.timelineView.calendar.addEvent(event);
-						}
-					});
-					// console.log(item[0][1], EventPeriod.parse(item[0][1]));
-				}
-			},
+		this.registerView(TIMELINE_VIEW_TYPE, leaf => {
+			this.timelineView = new TimelineView(leaf, this);
+			return this.timelineView;
 		});
 
-		this.addSettingTab(new SetInObsidianSettingsTab(this.app, this));
+		this.addRibbonIcon(TIMELINE_VIEW_ICON, 'SIO Timeline', () => this.revealView());
+
+		this.registerEvent(this.app.workspace.on("active-leaf-change", async (leaf: WorkspaceLeaf | null) => {
+			if (this.timelineView != null && leaf == this.timelineView.leaf)
+				await this.timelineView.update();
+		}));
+
+		//this.addSettingTab(new SetInObsidianSettingsTab(this.app, this));
 	}
 
-	async activateView() {
-		this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
-
-		await this.app.workspace.getRightLeaf(false).setViewState({
-			type: TIMELINE_VIEW_TYPE,
-			active: true,
-		});
+	async revealView() {
+		var leafs = this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE);
+		if (leafs.length == 0) {
+			// create it if it does not exist already
+			await this.app.workspace.getRightLeaf(false).setViewState({
+				type: TIMELINE_VIEW_TYPE,
+				active: true,
+			});
+		}
 
 		this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE)[0]);
 	}

@@ -17,31 +17,25 @@ export class TimelineView extends View {
 	}
 
 	async onOpen(): Promise<void> {
-		this.plugin.timelineView = this;
-
 		this.containerEl.empty();
-		this.containerEl.createEl("h3", {
-			attr: {
-				"style": "text-align: center;",
-			},
-			text: "Set In Obsidian"
-		});
 
 		// the calendar is contained inside the wrapper so it overflows and you can scroll
-		this.containerEl.createDiv({ cls: "set-in-obsidian-wrapper", }, wrapper =>
-			wrapper.createDiv({ cls: "set-in-obsidian-timeline", }, elem => {
+		this.containerEl.createDiv({ cls: 'set-in-obsidian-wrapper', }, wrapper => {
+			var currentRange = wrapper.createEl('h4', { text: 'UNDEFINED' });
+
+			wrapper.createDiv({ cls: 'set-in-obsidian-timeline', }, elem => {
 				this.calendar = new Calendar({
 					target: elem,
 					props: {
 						plugins: [TimeGrid, DayGrid, ListGrid],
 						options: {
-							view: 'listWeek',
-							allDaySlot: false,
+							view: 'timeGridDay',
+							// allDaySlot: false,
 							nowIndicator: true,
 							headerToolbar: {
-								start: 'prev,next today',
-								center: 'title',
-								end: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+								start: 'today',
+								center: 'dayGridMonth timeGridWeek,listWeek timeGridDay',
+								end: 'prev,next'
 							},
 							buttonText: {
 								today: 'Today',
@@ -55,25 +49,29 @@ export class TimelineView extends View {
 								timeGridDay: 'Day',
 								timeGridWeek: 'Week'
 							},
+							// overrides per view
+							views: {},
 							// sets class names for html elements
 							theme: (theme: any) => {
 								// remove today highlighting, easier than doing css
 								theme.today = '';
 								return theme;
 							},
+							// use event calendar format for ranges but display them in header above
+							datesSet: (_info: any) => currentRange.setText(this.calendar.getView().title),
 							eventClick: (info: any) => {
-								console.log("clicked", info.event, info.event.extendedProps);
+								// TODO: go to the place in file when clicked
+								// console.log('clicked', info.event, info.event.extendedProps);
 							}
 						}
 					}
 				});
-			})
-		);
+			});
+		});
 	}
 
-	async onClose(): Promise<void> {
-		this.plugin.timelineView = null;
-		this.calendar = null;
+	async update(): Promise<void> {
+		this.calendar.setOption("events", await this.plugin.getAllEvents());
 	}
 
 	getViewType(): string {
@@ -81,6 +79,6 @@ export class TimelineView extends View {
 	}
 
 	getDisplayText(): string {
-		return "SIO Timeline";
+		return 'SIO Timeline';
 	}
 }
