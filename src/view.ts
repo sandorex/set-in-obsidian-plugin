@@ -73,6 +73,7 @@ export class TimelineView extends View {
 
 	async onClose(): Promise<void> {
 		this.plugin.timelineView = null;
+		this.calendar = null;
 	}
 
 	getViewType(): string {

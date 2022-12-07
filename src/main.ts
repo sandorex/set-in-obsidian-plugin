@@ -64,16 +64,49 @@ export default class SetInObsidianPlugin extends Plugin {
 
 		this.registerView(TIMELINE_VIEW_TYPE, leaf => new TimelineView(leaf, this));
 
-		// this.addRibbonIcon(TIMELINE_VIEW_ICON, "SIO Timeline", () => this.activateView());
-		this.addRibbonIcon(TIMELINE_VIEW_ICON, "SIO Timeline", async () => {
-			var items = await this.getListItems([this.app.workspace.getActiveFile()])
+		this.addRibbonIcon(TIMELINE_VIEW_ICON, "SIO Timeline", () => this.activateView());
 
+		this.addCommand({
+			id: "set-in-obsidian-test",
+			name: "Test command",
+			callback: async () => {
+				const file = this.app.workspace.getActiveFile();
 
-			for (const [file, item] of items) {
-				console.log(item[0][1], EventPeriod.parse(item[0][1]));
-			}
-			// parseTimeFromListItem
-			// console.log(await this.getListItems([this.app.workspace.getActiveFile()]));
+				if (file == null) {
+					console.log("file is null");
+					return;
+				}
+
+				const items = await this.getListItems([file]);
+
+				// TODO: it adds each item twice for some reason..
+				for (const [file, itemInfos] of items) {
+					itemInfos.forEach(([cache, item]) => {
+						const results = EventPeriod.parse(item);
+
+						if (results != null) {
+							console.log(results);
+							const period = results[0];
+							const leftover = results[1];
+
+							// TODO: some cleaner way to convert period into event object
+							var event: Record<string, any> = {
+								title: leftover,
+								start: period.start,
+								allDay: period.isAllDay(),
+								// start: period.start,
+								// backgroundColor: cache.task == ' ' ? null : 'green',
+							};
+
+							if (!period.isAllDay())
+								event.end = period.end;
+
+							this.timelineView.calendar.addEvent(event);
+						}
+					});
+					// console.log(item[0][1], EventPeriod.parse(item[0][1]));
+				}
+			},
 		});
 
 		this.addSettingTab(new SetInObsidianSettingsTab(this.app, this));
