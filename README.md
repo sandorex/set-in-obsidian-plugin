@@ -1,6 +1,8 @@
 # Set In Obsidian Plugin
 Plugin that allows time planning in obsidian
 
+> **WARNING:** This plugin is experimental and may fundamentally change in the future
+
 *Made cause [obsidian-day-planner](https://github.com/lynchjames/obsidian-day-planner) has been abandoned*
 
 ## Data Safe Design

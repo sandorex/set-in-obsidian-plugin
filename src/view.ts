@@ -200,7 +200,7 @@ export class TimelineView extends View {
 	}
 
 	async update(): Promise<void> {
-		console.log("update");
+		// TODO: add debug option to monitor number of updates just in case
 		this.calendar.setOption("events", await this.gatherEvents());
 	}
 

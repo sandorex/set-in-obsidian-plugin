@@ -1,0 +1,23 @@
+.ec-button {
+    color: var(--text-normal) !important;
+    background-color: var(--background-primary) !important;
+}
+
+.ec-button:hover {
+    /* color: var(--color-base-100) !important; */
+    background-color: var(--background-secondary-alt) !important;
+}
+
+.ec-active {
+    background-color: var(--color-base-35) !important;
+}
+
+.ec-day {
+    background-color: transparent !important;
+}
+
+.ec-prev::after,
+.ec-next::after {
+    border-color: var(--text-normal) !important;
+}
+

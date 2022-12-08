@@ -2,11 +2,13 @@
 @import url(@event-calendar/core/index.css);
 
 /* other files */
-@import url(./calendar-dark-theme.css);
+@import url(event-calendar-theming.css);
 
 .set-in-obsidian-wrapper > h3,
 .set-in-obsidian-wrapper > h4 {
     text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .set-in-obsidian-wrapper {
