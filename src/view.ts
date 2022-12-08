@@ -2,18 +2,119 @@ import Calendar from '@event-calendar/core';
 import DayGrid from '@event-calendar/day-grid';
 import ListGrid from '@event-calendar/list';
 import TimeGrid from '@event-calendar/time-grid';
-import { View, WorkspaceLeaf } from "obsidian";
+import { EditorPosition, EventRef, ListItemCache, MarkdownView, TFile, View, WorkspaceLeaf } from "obsidian";
 import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from "./main";
+import { EventPeriod } from './parser';
+
+/** Generator that chains two arrays together into one generator
+ *
+ *  `array2` must be equal or larger in length than `array1`
+ */
+function* chain<K, V>(array1: K[], array2: V[]): Generator<[K, V]> {
+	for (let i = 0; i < array1.length; i++) {
+		yield [array1[i], array2[i]];
+	}
+}
+
+async function readFiles(files: TFile[]): Promise<Map<TFile, String>> {
+	return Promise.all(files.map(file => app.vault.cachedRead(file))).then(fileContents =>
+		new Map<TFile, String>(chain(files, fileContents))
+	);
+}
+
+async function extractListItems(files: TFile[]): Promise<Map<TFile, [ListItemCache, String][]>> {
+	const fileContents = await readFiles(files);
+
+	var items = new Map<TFile, [ListItemCache, String][]>();
+
+	// extract each item as string
+	fileContents.forEach((contents, file) => {
+		const cache = app.metadataCache.getFileCache(file);
+
+		if (cache.listItems == null)
+			return;
+
+		items.set(file, cache.listItems.map(item => {
+			// all list items start with '- '
+			var offset = 2;
+
+			// remove the '[ ] ' from the task, you can use cache task property to check type
+			if (item.task != null)
+				offset += 4;
+
+			return [
+				item,
+				contents.substring(item.position.start.offset + offset, item.position.end.offset).trim()
+			];
+		}));
+	});
+
+	return items;
+}
 
 export class TimelineView extends View {
 	plugin: SetInObsidianPlugin;
 	calendar?: any = null;
+	resolvedEventRef?: EventRef = null;
+	lastVisibility = false;
 
 	constructor(leaf: WorkspaceLeaf, plugin: SetInObsidianPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 		this.navigation = true;
 		this.icon = TIMELINE_VIEW_ICON;
+	}
+
+	async getListItems(): Promise<Map<TFile, [ListItemCache, String][]>> {
+		return extractListItems(this.app.vault.getMarkdownFiles());
+	}
+
+	async gatherEvents(): Promise<CalendarEvent[]> {
+		const listItems = await this.getListItems();
+
+		var events: CalendarEvent[] = [];
+
+		for (const [file, items] of listItems) {
+			for (const [metadata, rawText] of items) {
+				const parseResults = EventPeriod.parse(rawText);
+
+				if (parseResults == null)
+					continue;
+
+				const [period, itemText] = parseResults;
+
+				// TODO: make a new event class
+				var event: CalendarEvent = {
+					title: itemText,
+					start: period.start,
+					allDay: period.isAllDay(),
+					extendedProps: {
+						file: file,
+						line: metadata.position.start.line,
+						col: metadata.position.start.col
+					}
+				};
+
+				if (!period.isAllDay())
+					event.end = period.end;
+
+				if (metadata.task != undefined) {
+					// TODO: for now all completed tasks are green
+					if (metadata.task != ' ')
+						event.backgroundColor = 'green';
+				} else
+					// non task events are light blue
+					event.backgroundColor = 'lightblue';
+
+				events.push(event);
+			}
+		}
+
+		return events;
+	}
+
+	clearEvents(): void {
+		this.calendar.setOption("events", []);
 	}
 
 	async onOpen(): Promise<void> {
@@ -59,9 +160,33 @@ export class TimelineView extends View {
 							},
 							// use event calendar format for ranges but display them in header above
 							datesSet: (_info: any) => currentRange.setText(this.calendar.getView().title),
-							eventClick: (info: any) => {
-								// TODO: go to the place in file when clicked
-								// console.log('clicked', info.event, info.event.extendedProps);
+							eventClick: async (info: {
+								event: {
+									// NOTE: these are added in `gatherEvents` function!
+									extendedProps: {
+										file: TFile,
+										line: number,
+										col: number,
+									}
+								},
+								jsEvent: { ctrlKey: Boolean }
+							}) => {
+								const file = info.event.extendedProps.file;
+								const line = info.event.extendedProps.line;
+								const col = info.event.extendedProps.col;
+
+								// require ctrl to open the file
+								if (info.jsEvent.ctrlKey) {
+									var leaf = this.app.workspace.getLeaf('tab');
+									await leaf.openFile(file);
+
+									var view = leaf.view as MarkdownView;
+									view.editor.setCursor({ line: line, ch: col } as EditorPosition);
+									view.editor.scrollIntoView({
+										from: { line: - 1, ch: col },
+										to: { line: line + 1, ch: col },
+									}, true);
+								}
 							}
 						}
 					}
@@ -70,8 +195,38 @@ export class TimelineView extends View {
 		});
 	}
 
+	async onClose(): Promise<void> {
+		app.metadataCache.offref(this.resolvedEventRef);
+	}
+
 	async update(): Promise<void> {
-		this.calendar.setOption("events", await this.plugin.getAllEvents());
+		console.log("update");
+		this.calendar.setOption("events", await this.gatherEvents());
+	}
+
+	isVisible(): boolean {
+		// i have no idea how this works but it does
+		// source: https://stackoverflow.com/a/21696585
+		return this.containerEl.offsetParent !== null;
+	}
+
+	onResize(): void {
+		// NOTE: update when files change only if the view is visible!
+		if (this.isVisible()) {
+			// update it when the view is again visible
+			if (this.lastVisibility == false)
+				this.update();
+
+			// NOTE: does fire on renames contrary to 'changed'
+			this.resolvedEventRef = app.metadataCache.on('resolved', async () => await this.update());
+		} else {
+			app.metadataCache.offref(this.resolvedEventRef);
+
+			// clean events to reduce memory usage as they are gonna be outdated anyways
+			this.clearEvents();
+		}
+
+		this.lastVisibility = this.isVisible();
 	}
 
 	getViewType(): string {
