@@ -14,6 +14,9 @@ The plugin looks for date in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) 
 - `2022-12-09 2022-12-11` event from 9th december 00:00 to 11th december 00:00
 ```
 
+Which would show in the timeline like so:
+![img](screenshots/screenshot-list.png)
+
 ## Data Safe Design
 To avoid data loss caused by bugs and such <u>**the plugin shall not under any circumstance do any modification to any file**</u>
 
