@@ -130,7 +130,7 @@ export class TimelineView extends View {
 					props: {
 						plugins: [TimeGrid, DayGrid, ListGrid],
 						options: {
-							view: 'timeGridDay',
+							view: 'listWeek',
 							allDaySlot: false,
 							nowIndicator: true,
 							headerToolbar: {
@@ -151,7 +151,11 @@ export class TimelineView extends View {
 								timeGridWeek: 'Week'
 							},
 							// overrides per view
-							views: {},
+							views: {
+								timeGridDay: {
+									slotDuration: '00:30'
+								}
+							},
 							// sets class names for html elements
 							theme: (theme: any) => {
 								// remove today highlighting, easier than doing css
