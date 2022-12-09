@@ -13,15 +13,15 @@ export class EventPeriod {
 		const momentParse = (input: string) => window.moment(input, window.moment.ISO_8601, true);
 		const momentParseDur = (input: string) => window.moment.duration(input);
 
-		if (raw.startsWith('%%;')) {
-			var index = raw.indexOf(';', 3);
+		if (raw.startsWith('`')) {
+			var index = raw.indexOf('`', 1);
 			if (index == -1)
 				return null;
 
-			const leftover = raw.substring(index + 3);
+			const leftover = raw.substring(index + 1).trim();
 
 			// TODO: this code is garbage please clean it up
-			var timeRaw = raw.substring(3, index);
+			var timeRaw = raw.substring(1, index);
 			if (timeRaw.contains(' ')) {
 				const timeParts = timeRaw.split(' ', 2);
 				const start = momentParse(timeParts[0]);

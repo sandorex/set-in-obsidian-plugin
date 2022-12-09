@@ -3,8 +3,8 @@ import DayGrid from '@event-calendar/day-grid';
 import ListGrid from '@event-calendar/list';
 import TimeGrid from '@event-calendar/time-grid';
 import { EditorPosition, EventRef, ListItemCache, MarkdownView, TFile, View, WorkspaceLeaf } from "obsidian";
+import { EventPeriod } from './event';
 import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from "./main";
-import { EventPeriod } from './parser';
 
 /** Generator that chains two arrays together into one generator
  *
@@ -82,6 +82,9 @@ export class TimelineView extends View {
 					continue;
 
 				const [period, itemText] = parseResults;
+
+				if (period == null)
+					continue;
 
 				// TODO: make a new event class
 				var event: CalendarEvent = {
