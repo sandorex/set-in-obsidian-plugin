@@ -153,6 +153,8 @@ export class TimelineView extends View {
 							// overrides per view
 							views: {
 								timeGridDay: {
+									// make each slot be 30min
+									// TODO: add buttons or a slider to adjust this on the fly
 									slotDuration: '00:30'
 								}
 							},
@@ -162,6 +164,12 @@ export class TimelineView extends View {
 								theme.today = '';
 								return theme;
 							},
+							// TODO: render more smartly like not showing end time when the event ends in the next day
+							// eventContent: (info: {
+							// 	event: CalendarEvent,
+							// 	timeText: string,
+							// 	view: any
+							// }) => {},
 							eventTimeFormat: {
 								hour: 'numeric',
 								minute: '2-digit',
