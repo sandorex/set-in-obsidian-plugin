@@ -2,7 +2,7 @@ import moment from 'moment';
 
 export class EventPeriod {
 	start: Date;
-	end?: Date;
+	end: Date;
 
 	constructor(start: Date, end?: Date) {
 		this.start = start;
@@ -46,16 +46,13 @@ export class EventPeriod {
 		if (!start.isValid())
 			return null;
 
+		// set end to be 24:00 so that it literally is all day
 		if (end == null)
-			return new EventPeriod(start.toDate(), null);
+			return new EventPeriod(start.toDate(), start.clone().set("hours", 24).set("minutes", 0).toDate());
 
 		if (window.moment.isDuration(end))
 			return new EventPeriod(start.toDate(), end.asMinutes() >= 1 ? start.clone().add(end).toDate() : null);
 
 		return new EventPeriod(start.toDate(), end.toDate());
-	}
-
-	isAllDay(): boolean {
-		return this.end == null;
 	}
 }

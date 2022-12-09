@@ -21,5 +21,6 @@
     margin-left: auto;
     margin-right: auto;
     width: 95%;
-    padding-bottom: 10px;
+    /* this is high cause the floating bar in obsidian covers the bottom */
+    padding-bottom: 40px;
 }

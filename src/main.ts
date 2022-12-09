@@ -21,6 +21,8 @@ export default class SetInObsidianPlugin extends Plugin {
 		});
 
 		this.addRibbonIcon(TIMELINE_VIEW_ICON, 'SIO Timeline', () => this.revealView());
+
+		// this.registerEditorExtension(placeholders);
 	}
 
 	async revealView() {

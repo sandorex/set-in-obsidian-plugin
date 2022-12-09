@@ -90,7 +90,7 @@ export class TimelineView extends View {
 				var event: CalendarEvent = {
 					title: itemText,
 					start: period.start,
-					allDay: period.isAllDay(),
+					end: period.end,
 					extendedProps: {
 						file: file,
 						line: metadata.position.start.line,
@@ -98,16 +98,13 @@ export class TimelineView extends View {
 					}
 				};
 
-				if (!period.isAllDay())
-					event.end = period.end;
-
 				if (metadata.task != undefined) {
 					// TODO: for now all completed tasks are green
 					if (metadata.task != ' ')
 						event.backgroundColor = 'green';
 				} else
 					// non task events are light blue
-					event.backgroundColor = 'lightblue';
+					event.backgroundColor = 'darkgray';
 
 				events.push(event);
 			}
@@ -134,7 +131,7 @@ export class TimelineView extends View {
 						plugins: [TimeGrid, DayGrid, ListGrid],
 						options: {
 							view: 'timeGridDay',
-							// allDaySlot: false,
+							allDaySlot: false,
 							nowIndicator: true,
 							headerToolbar: {
 								start: 'today',
@@ -160,6 +157,16 @@ export class TimelineView extends View {
 								// remove today highlighting, easier than doing css
 								theme.today = '';
 								return theme;
+							},
+							eventTimeFormat: {
+								hour: 'numeric',
+								minute: '2-digit',
+								hour12: false,
+							},
+							slotLabelFormat: {
+								hour: 'numeric',
+								minute: '2-digit',
+								hour12: false,
 							},
 							// use event calendar format for ranges but display them in header above
 							datesSet: (_info: any) => currentRange.setText(this.calendar.getView().title),
