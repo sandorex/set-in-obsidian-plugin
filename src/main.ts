@@ -1,4 +1,4 @@
-import { Plugin } from 'obsidian';
+import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { TimelineView } from './view';
 
 import type moment from 'moment';
@@ -15,19 +15,13 @@ export default class SetInObsidianPlugin extends Plugin {
 	timelineView?: TimelineView;
 
 	async onload() {
-		this.registerView(TIMELINE_VIEW_TYPE, leaf => {
-			this.timelineView = new TimelineView(leaf, this);
-			return this.timelineView;
-		});
-
+		this.registerView(TIMELINE_VIEW_TYPE, leaf => new TimelineView(leaf, this));
 		this.addRibbonIcon(TIMELINE_VIEW_ICON, 'SIO Timeline', () => this.revealView());
-
-		// this.registerEditorExtension(placeholders);
 	}
 
 	async revealView() {
-		var leafs = this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE);
-		if (leafs.length == 0) {
+		var leaf = this.getTimelineLeaf();
+		if (leaf == null) {
 			// create it if it does not exist already
 			await this.app.workspace.getRightLeaf(false).setViewState({
 				type: TIMELINE_VIEW_TYPE,
@@ -35,7 +29,26 @@ export default class SetInObsidianPlugin extends Plugin {
 			});
 		}
 
-		this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE)[0]);
+		this.app.workspace.revealLeaf(this.getTimelineLeaf());
+	}
+
+	getTimelineLeaf(): WorkspaceLeaf | null {
+		// there should only ever be one
+		var leafs = this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE);
+
+		if (leafs.length == 0)
+			return null;
+
+		return leafs[0];
+	}
+
+	getTimelineView(): TimelineView | null {
+		var leaf = this.getTimelineLeaf();
+
+		if (leaf == null)
+			return null;
+
+		return leaf.view as TimelineView;
 	}
 
 	onunload() {
