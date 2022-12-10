@@ -11,7 +11,7 @@ The plugin looks for date in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) 
 ```
 - `2022-12-09T14:00` all day event (14:00 to 24:00)
 - `2022-12-09T14:00 PT2H` event from 14:00 and lasts 2 hours
-- `2022-12-09 2022-12-11` event from 9th december 00:00 to 11th december 00:00
+- `2022-12-09 2022-12-11` event from 9th december 24:00 to 11th december 24:00
 ```
 
 Which would show in the timeline like so:
