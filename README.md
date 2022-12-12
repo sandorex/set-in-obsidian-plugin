@@ -28,7 +28,7 @@ To avoid data loss caused by bugs and such <u>**the plugin shall not under any c
 - Enable the plugin in community plugins in settings
 
 ## Huge Thanks To
-- [fullcalendar developers] (https://github.com/fullcalendar/fullcalendar)
+- [fullcalendar developers](https://github.com/fullcalendar/fullcalendar)
 - Stackoverflow
 - Peeps at [obsidian discord](https://discord.com/invite/obsidianmd)
 
