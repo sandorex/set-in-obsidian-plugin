@@ -29,7 +29,9 @@ export default class SetInObsidianPlugin extends Plugin {
 			});
 		}
 
-		this.app.workspace.revealLeaf(this.getTimelineLeaf());
+		leaf = this.getTimelineLeaf();
+		if (leaf != null)
+			this.app.workspace.revealLeaf(leaf);
 	}
 
 	getTimelineLeaf(): WorkspaceLeaf | null {
