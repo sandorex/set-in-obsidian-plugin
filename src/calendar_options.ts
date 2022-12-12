@@ -1,6 +1,7 @@
 import { CalendarOptions, createDuration } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
+import rrulePlugin from '@fullcalendar/rrule';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
 export const CALENDAR_OPTIONS: CalendarOptions = {
@@ -8,7 +9,8 @@ export const CALENDAR_OPTIONS: CalendarOptions = {
 	plugins: [
 		dayGridPlugin,
 		listPlugin,
-		timeGridPlugin
+		timeGridPlugin,
+		rrulePlugin
 	],
 	views: {
 		timeGridDay: {
@@ -26,7 +28,8 @@ export const CALENDAR_OPTIONS: CalendarOptions = {
 		day: 'Day',
 		month: 'Month',
 		today: 'Today',
-		week: 'Week'
+		week: 'Week',
+		list: 'List',
 	},
 	eventSources: [],
 	eventTimeFormat: {

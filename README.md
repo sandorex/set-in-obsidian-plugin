@@ -1,9 +1,9 @@
 # Set In Obsidian Plugin
 Plugin that allows time planning in obsidian
 
-> **WARNING:** This plugin is experimental and may fundamentally change in the future
+> **WARNING:** Plugin should be considered beta software until version 1.1.x is released
 
-*Made cause [obsidian-day-planner](https://github.com/lynchjames/obsidian-day-planner) has been abandoned*
+*Made as a simpler replacement for [obsidian-day-planner](https://github.com/lynchjames/obsidian-day-planner)*
 
 ## Quick Usage Guide
 The plugin looks for date in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format inside inline code backticks at beginning of any list item, here are some examples of the syntax:
@@ -17,8 +17,7 @@ The plugin looks for date in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) 
 Which would show in the timeline like so:
 ![img](screenshots/screenshot-list.png)
 
-## Data Safe Design
-To avoid data loss caused by bugs and such <u>**the plugin shall not under any circumstance do any modification to any file**</u>
+**Do note that the plugin gathers events at runtime so you may experience performance issues if your vault is very large**
 
 ## Installation
 **The plugin is not yet in obsidian repository**

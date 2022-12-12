@@ -1,4 +1,5 @@
 import { ListItemCache, TFile } from 'obsidian';
+import { RRule } from 'rrule';
 
 /** Generator that chains two arrays together into one generator
  *
@@ -16,7 +17,12 @@ async function readFilesCached(files: TFile[]): Promise<Map<TFile, String>> {
 	);
 }
 
-export function parseListItem(raw: string): [Date, Date, string] | null {
+export function parseListItem(raw: string): {
+	start: Date,
+	end?: Date,
+	rrule?: any,
+	leftover: string,
+} | null {
 	const momentParse = (input: string) => window.moment(input, window.moment.ISO_8601, true);
 	const momentParseDur = (input: string) => window.moment.duration(input);
 
@@ -29,40 +35,75 @@ export function parseListItem(raw: string): [Date, Date, string] | null {
 
 		var start = null;
 		var end = null;
+		var rrule: RRule | null = null;
+
 		var timeRaw = raw.substring(1, index);
 		if (timeRaw.contains(' ')) {
-			const timeParts = timeRaw.split(' ', 2);
+			// split but keep the leftovers
+			const timeParts = timeRaw.split(/ (.*)/s);
 			start = momentParse(timeParts[0]);
 
-			if (timeParts[1].startsWith('P'))
+			var ch = timeParts[1].at(0);
+			if (ch == null)
+				return null;
+
+			if (ch == 'P')
 				end = momentParseDur(timeParts[1]);
-			else
+			else if (ch >= '0' && ch <= '9')
+				// ISO 8601 starts with the year so assume date
 				end = momentParse(timeParts[1]);
+			else {
+				// otherwise try getting rrule
+				try {
+					rrule = RRule.fromText(timeParts[1]);
+				} catch (err) {
+					// TODO: debugging mode and more information for catching errors
+					return null;
+				}
+
+				// check if read properly, as it gives some weird results otherwise
+				if (timeParts[1] != rrule.toText())
+					return null;
+			}
 		} else
 			start = momentParse(timeRaw);
 
 		if (start == null)
 			return null;
 
+		if (rrule != null) {
+			// has to have a start otherwise it will always be from right now
+			rrule.origOptions.dtstart = start.toDate();
+			return {
+				start: start.toDate(),
+				rrule: rrule.options,
+				leftover: leftover,
+			}
+		}
+
 		if (end == null)
-			return [
-				start.toDate(),
-				start.clone().set('hours', 24).set('minutes', 0).set('seconds', 0).toDate(),
-				leftover
-			];
+			return {
+				start: start.toDate(),
+				end: start.clone().set('hours', 24).set('minutes', 0).set('seconds', 0).toDate(),
+				leftover: leftover,
+			}
 
 		if (window.moment.isDuration(end))
-			return [
-				start.toDate(),
-				start.clone().add(end).toDate(),
-				leftover
-			];
+			return {
+				start: start.toDate(),
+				end: start.clone().add(end).toDate(),
+				leftover: leftover,
+			}
 
 		// making it inclusive of the end date
 		if (end.hours() + end.minutes() + end.seconds() == 0)
 			end.set('hours', 24);
 
-		return [start.toDate(), end.toDate(), leftover];
+		return {
+			start: start.toDate(),
+			end: end.toDate(),
+			leftover: leftover,
+		}
 	}
 
 	return null;

@@ -1,5 +1,5 @@
 import { Calendar } from '@fullcalendar/core';
-import { EditorPosition, EventRef, ListItemCache, MarkdownView, Notice, TFile, View, WorkspaceLeaf } from 'obsidian';
+import { EditorPosition, EventRef, ListItemCache, MarkdownView, Notice, Platform, TFile, View, WorkspaceLeaf } from 'obsidian';
 import { CALENDAR_OPTIONS } from './calendar_options';
 import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from './main';
 import { extractListItems, parseListItem } from './parser';
@@ -9,7 +9,6 @@ export class TimelineView extends View {
 	private lastVisibility = false;
 
 	plugin: SetInObsidianPlugin;
-	events: Record<any, any>[] = [];
 
 	/**
 	 * @public
@@ -35,19 +34,20 @@ export class TimelineView extends View {
 
 		for (const [file, items] of listItems) {
 			for (const [metadata, rawText] of items) {
-				const parseResults = parseListItem(rawText);
+				const results = parseListItem(rawText);
 
-				if (parseResults == null)
+				if (results == null)
 					continue;
 
-				const [start, end, itemText] = parseResults;
-
-				// TODO: color done tasks
+				// TODO: color done tasks, color recurring tasks too
 
 				events.push({
-					title: itemText,
-					start: start,
-					end: end,
+					title: results.leftover,
+					start: results.start,
+					end: results.end,
+					rrule: results.rrule,
+
+					// NOTE: these are used to open the file where the event was found
 					extendedProps: {
 						file: file,
 						line: metadata.position.start.line,
@@ -60,11 +60,6 @@ export class TimelineView extends View {
 		return events;
 	}
 
-	clearEvents(): void {
-		this.events = []
-		this.calendar?.refetchEvents();
-	}
-
 	async onOpen(): Promise<void> {
 		this.containerEl.empty();
 
@@ -72,7 +67,6 @@ export class TimelineView extends View {
 		this.containerEl.createDiv({ cls: 'set-in-obsidian-wrapper', }, wrapper => {
 			var currentRange = wrapper.createEl('h4', { text: 'UNDEFINED' });
 
-			// TODO: add event hover to show title
 			wrapper.createDiv({ cls: 'set-in-obsidian-timeline', }, elem => {
 				var options = CALENDAR_OPTIONS;
 
@@ -90,9 +84,8 @@ export class TimelineView extends View {
 					const line = arg.event.extendedProps.line;
 					const col = arg.event.extendedProps.col;
 
-					// require ctrl to open the file
-					// TODO: figure out something on mobile
-					if (arg.jsEvent.ctrlKey) {
+					// require ctrl to open the file only on desktop
+					if (arg.jsEvent.ctrlKey || Platform.isMobile) {
 						var leaf = app.workspace.getLeaf('tab');
 						await leaf.openFile(file);
 
@@ -120,7 +113,6 @@ export class TimelineView extends View {
 
 	async update(): Promise<void> {
 		// TODO: add debug option to monitor number of updates just in case
-		this.events = await this.gatherEvents();
 		this.calendar?.refetchEvents();
 	}
 
@@ -144,9 +136,6 @@ export class TimelineView extends View {
 				app.metadataCache.offref(this.resolvedEventRef);
 
 			this.resolvedEventRef = null;
-
-			// clean events to reduce memory usage as they are gonna be outdated anyways
-			this.clearEvents();
 		}
 
 		this.lastVisibility = this.isVisible();
