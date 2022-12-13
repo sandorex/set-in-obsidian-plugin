@@ -4,9 +4,10 @@ import { CALENDAR_OPTIONS } from './calendar_options';
 import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from './main';
 import { extractListItems, parseListItem } from './parser';
 
+const FILE_SIZE_LIMIT = 5_000_000; // 5mb
+
 export class TimelineView extends View {
 	private resolvedEventRef: EventRef | null;
-	private lastVisibility = false;
 
 	plugin: SetInObsidianPlugin;
 
@@ -23,8 +24,35 @@ export class TimelineView extends View {
 		this.icon = TIMELINE_VIEW_ICON;
 	}
 
+	filterMarkdownFiles(files: TFile[]): TFile[] {
+		return files.filter(file => {
+			const cache = app.metadataCache.getFileCache(file);
+
+			// restrict file size
+			if (file.stat.size > FILE_SIZE_LIMIT)
+				return false;
+
+			// if it does not have any list items it's useless
+			if (cache?.listItems?.length || 0 <= 0)
+				return false;
+
+			const frontmatter = cache?.frontmatter;
+			if (frontmatter != null) {
+				// explicitly ignored files, could be useful for huge files
+				if (frontmatter['set-in-obsidian-ignore'] == true)
+					return false;
+
+				// excalidraw files can be pretty huge so ignore them as well
+				if (frontmatter['excalidraw-plugin'] !== undefined)
+					return false;
+			}
+
+			return true;
+		});
+	}
+
 	async getListItems(): Promise<Map<TFile, [ListItemCache, string][]>> {
-		return extractListItems(this.app.vault.getMarkdownFiles());
+		return extractListItems(this.filterMarkdownFiles(this.app.vault.getMarkdownFiles()));
 	}
 
 	async gatherEvents(): Promise<Record<any, any>[]> {
@@ -124,21 +152,16 @@ export class TimelineView extends View {
 
 	onResize(): void {
 		// NOTE: update when files change only if the view is visible!
-		if (this.isVisible()) {
+		if (this.isVisible() && this.resolvedEventRef == null) {
 			// update it when the view is again visible
-			if (this.lastVisibility == false)
-				this.update();
+			this.update();
 
 			// NOTE: does fire on renames contrary to 'changed'
 			this.resolvedEventRef = app.metadataCache.on('resolved', async () => await this.update());
-		} else {
-			if (this.resolvedEventRef != null)
-				app.metadataCache.offref(this.resolvedEventRef);
-
+		} else if (this.resolvedEventRef != null) {
+			app.metadataCache.offref(this.resolvedEventRef);
 			this.resolvedEventRef = null;
 		}
-
-		this.lastVisibility = this.isVisible();
 	}
 
 	getViewType(): string {
