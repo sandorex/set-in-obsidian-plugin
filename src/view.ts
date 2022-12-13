@@ -33,7 +33,7 @@ export class TimelineView extends View {
 				return false;
 
 			// if it does not have any list items it's useless
-			if (cache?.listItems?.length || 0 <= 0)
+			if (cache?.listItems && cache?.listItems.length <= 0)
 				return false;
 
 			const frontmatter = cache?.frontmatter;
