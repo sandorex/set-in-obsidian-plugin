@@ -77,7 +77,7 @@ export class TimelineView extends View {
 
 					// NOTE: these are used to open the file where the event was found
 					extendedProps: {
-						file: file,
+						file: file.file,
 						line: metadata.position.start.line,
 						col: metadata.position.start.col
 					}
