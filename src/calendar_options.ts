@@ -1,4 +1,5 @@
-import { CalendarOptions, createDuration } from '@fullcalendar/core';
+import { CalendarOptions } from '@fullcalendar/core';
+import { createDuration } from '@fullcalendar/core/internal';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import rrulePlugin from '@fullcalendar/rrule';

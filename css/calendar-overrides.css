@@ -56,7 +56,8 @@ EVERYTHING MUST BE IN .set-in-obsidian-timeline SO THAT ANY OTHER PLUGIN IS NOT 
 	text-decoration-line: none;
 }
 
-.set-in-obsidian-timeline .fc-header-toolbar {
+.set-in-obsidian-timeline .fc-header-toolbar,
+.set-in-obsidian-timeline .fc-footer-toolbar {
     margin-bottom: 15px !important;
 }
 
@@ -69,4 +70,9 @@ EVERYTHING MUST BE IN .set-in-obsidian-timeline SO THAT ANY OTHER PLUGIN IS NOT 
 	line-height: 1 !important;
 	padding: var(--size-4-1) var(--size-4-3) !important;
     line-height: 1 !important;
+}
+
+.set-in-obsidian-timeline .fc-timegrid-now-indicator-line,
+.set-in-obsidian-timeline .fc-timegrid-now-indicator-arrow {
+    color: red;
 }

@@ -1,18 +1,13 @@
-/* @fullcalendar library css */
-@import url(@fullcalendar/common/main.min.css);
-@import url(@fullcalendar/daygrid/main.min.css);
-@import url(@fullcalendar/list/main.min.css);
-@import url(@fullcalendar/timegrid/main.min.css);
-
 @import url(calendar-overrides.css);
 
 .set-in-obsidian-wrapper > h4 {
     text-align: center;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 0;
+    margin-bottom: 10px;
 }
 
 .set-in-obsidian-wrapper {
     width: 100%;
     height: 100%;
+    margin-top: 15px;
 }

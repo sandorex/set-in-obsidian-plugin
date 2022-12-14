@@ -12,20 +12,20 @@
 	"author": "Sandorex",
 	"license": "MIT",
 	"devDependencies": {
-		"@fullcalendar/core": "^5.11.3",
-		"@fullcalendar/daygrid": "^5.11.3",
-		"@fullcalendar/list": "^5.11.3",
-		"@fullcalendar/rrule": "^5.11.3",
-		"@fullcalendar/timegrid": "^5.11.3",
+		"@fullcalendar/core": "^6.0.0",
+		"@fullcalendar/daygrid": "^6.0.0",
+		"@fullcalendar/list": "^6.0.0",
+		"@fullcalendar/rrule": "^6.0.0",
+		"@fullcalendar/timegrid": "^6.0.0",
 		"@types/moment": "2.13.0",
-		"@types/node": "^16.11.6",
-		"@typescript-eslint/eslint-plugin": "^5.2.0",
-		"@typescript-eslint/parser": "^5.2.0",
-		"builtin-modules": "^3.2.0",
-		"esbuild": "0.13.12",
+		"@types/node": "^18.11.15",
+		"@typescript-eslint/eslint-plugin": "^5.46.1",
+		"@typescript-eslint/parser": "^5.46.1",
+		"builtin-modules": "^3.3.0",
+		"esbuild": "0.16.6",
 		"obsidian": "latest",
 		"rrule": "^2.7.1",
-		"tslib": "2.3.1",
-		"typescript": "4.4.4"
+		"tslib": "2.4.1",
+		"typescript": "4.9.4"
 	}
 }
