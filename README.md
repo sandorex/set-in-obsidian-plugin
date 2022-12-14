@@ -14,10 +14,19 @@ The plugin looks for date in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) 
 - `2022-12-09 2022-12-11` event from 9th december 24:00 to 11th december 24:00
 ```
 
-Which would show in the timeline like so:
+You can also make recurring events using [RRule](https://jakubroztocil.github.io/rrule/) *(iCalendar RFC string is coming in future versions)*
+```
+- `2022-12-01 every 3 days` happens every 3 days
+```
+
+Which would show in the list view like so:
 ![img](screenshots/screenshot-list.png)
 
-**Do note that the plugin gathers events at runtime so you may experience performance issues if your vault is very large**
+And month view
+![img](screenshots/screenshot-month.png)
+
+## Incompatible Plugins
+As the plugin uses [fullcalendar](https://github.com/fullcalendar/fullcalendar), other plugins using it may affect the look of the calendar depending on how they wrote the CSS *(for example [davish/obsidian-full-calendar](https://github.com/davish/obsidian-full-calendar))*
 
 ## Installation
 **The plugin is not yet in obsidian repository**

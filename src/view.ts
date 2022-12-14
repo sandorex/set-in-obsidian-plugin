@@ -1,5 +1,5 @@
 import { Calendar } from '@fullcalendar/core';
-import { EditorPosition, EventRef, ListItemCache, MarkdownView, Notice, Platform, TFile, View, WorkspaceLeaf } from 'obsidian';
+import { EditorPosition, EventRef, MarkdownView, Notice, Platform, TFile, View, WorkspaceLeaf } from 'obsidian';
 import { CALENDAR_OPTIONS } from './calendar_options';
 import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from './main';
 import { extractListItems, parseListItem } from './parser';
@@ -13,7 +13,7 @@ export class TimelineView extends View {
 
 	/**
 	 * @public
-	 * the instance of fullcalendar
+	 * The instance of fullcalendar
 	 */
 	calendar: Calendar | null;
 
@@ -24,56 +24,56 @@ export class TimelineView extends View {
 		this.icon = TIMELINE_VIEW_ICON;
 	}
 
+	/**
+	 * Filters files by removing files without list items, files that are too large and some special cases
+	 */
 	filterMarkdownFiles(files: TFile[]): TFile[] {
 		return files.filter(file => {
-			const cache = app.metadataCache.getFileCache(file);
-
 			// restrict file size
 			if (file.stat.size > FILE_SIZE_LIMIT)
 				return false;
 
+			const cache = app.metadataCache.getFileCache(file);
+
 			// if it does not have any list items it's useless
-			if (cache?.listItems && cache?.listItems.length <= 0)
+			if (cache?.listItems && cache.listItems.length <= 0)
 				return false;
 
-			const frontmatter = cache?.frontmatter;
-			if (frontmatter != null) {
-				// explicitly ignored files, could be useful for huge files
-				if (frontmatter['set-in-obsidian-ignore'] == true)
-					return false;
+			// explicitly ignored files, could be useful for huge files
+			if (cache?.frontmatter?.['set-in-obsidian-ignore'] == true)
+				return false;
 
-				// excalidraw files can be pretty huge so ignore them as well
-				if (frontmatter['excalidraw-plugin'] !== undefined)
-					return false;
-			}
+			// excalidraw files can be pretty huge so ignore them as well
+			if (cache?.frontmatter?.['excalidraw-plugin'] !== undefined)
+				return false;
 
 			return true;
 		});
 	}
 
-	async getListItems(): Promise<Map<TFile, [ListItemCache, string][]>> {
+	async getListItemsFromFiles() {
 		return extractListItems(this.filterMarkdownFiles(this.app.vault.getMarkdownFiles()));
 	}
 
+	/**
+	 * @returns all events from filtered files
+	 */
 	async gatherEvents(): Promise<Record<any, any>[]> {
-		const listItems = await this.getListItems();
+		const listItemFiles = await this.getListItemsFromFiles();
 
 		var events: Record<any, any>[] = [];
 
-		for (const [file, items] of listItems) {
-			for (const [metadata, rawText] of items) {
+		for (const file of listItemFiles) {
+			for (const [metadata, rawText] of file.listItems) {
 				const results = parseListItem(rawText);
 
 				if (results == null)
 					continue;
 
-				// TODO: color done tasks, color recurring tasks too
+				// TODO: color done tasks, but only border or text so that rrule tasks can be different
 
-				events.push({
-					title: results.leftover,
-					start: results.start,
-					end: results.end,
-					rrule: results.rrule,
+				var event: Record<any, any> = {
+					...results,
 
 					// NOTE: these are used to open the file where the event was found
 					extendedProps: {
@@ -81,7 +81,15 @@ export class TimelineView extends View {
 						line: metadata.position.start.line,
 						col: metadata.position.start.col
 					}
-				});
+				};
+
+				if (event.rrule != null)
+					event.color = '#eb8d1a'; // TODO: set the colors in options
+
+				if (file.fileCache.frontmatter?.['set-in-obsidian-color'] != null)
+					event.color = file.fileCache.frontmatter['set-in-obsidian-color'];
+
+				events.push(event);
 			}
 		}
 
@@ -144,6 +152,9 @@ export class TimelineView extends View {
 		this.calendar?.refetchEvents();
 	}
 
+	/**
+	 * @returns is the view visible to the user
+	 */
 	private isVisible(): boolean {
 		// i have no idea how this works but it does
 		// source: https://stackoverflow.com/a/21696585
@@ -151,9 +162,8 @@ export class TimelineView extends View {
 	}
 
 	onResize(): void {
-		// NOTE: update when files change only if the view is visible!
+		// NOTE: update when files change only if the view becomes visible again
 		if (this.isVisible() && this.resolvedEventRef == null) {
-			// update it when the view is again visible
 			this.update();
 
 			// NOTE: does fire on renames contrary to 'changed'

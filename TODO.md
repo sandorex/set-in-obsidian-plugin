@@ -6,3 +6,7 @@
 - [ ] fit the calendar better in the pane so that there is no scrolling
 - [ ] customize startup view in calendar
 - [ ] debugging options
+- [ ] rrule is being offset and not starting at the date set
+- [ ] highlight events from current file for easier editing?
+- [ ] week button is kinda different from the rest for some reaoson?? css...
+- [ ] parse iCalendar RFC (RRULE) string like `2022-12-01 'FREQ=DAILY;INTERVAL=2;COUNT=4'`

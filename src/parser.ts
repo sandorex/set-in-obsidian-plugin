@@ -1,9 +1,10 @@
-import { ListItemCache, TFile } from 'obsidian';
+import { CachedMetadata, ListItemCache, TFile } from 'obsidian';
 import { RRule } from 'rrule';
 
-/** Generator that chains two arrays together into one generator
+/**
+ * Generator that chains two arrays together into one generator
  *
- *  `array2` must be equal or larger in length than `array1`
+ * `array2` must be equal or larger in length than `array1`
  */
 function* chain<K, V>(array1: K[], array2: V[]): Generator<[K, V]> {
 	for (let i = 0; i < array1.length; i++) {
@@ -17,12 +18,12 @@ async function readFilesCached(files: TFile[]): Promise<Map<TFile, String>> {
 	);
 }
 
-export function parseListItem(raw: string): {
-	start: Date,
-	end?: Date,
-	rrule?: any,
-	leftover: string,
-} | null {
+/**
+ * Parses list item into an event
+ * @param raw raw list item without the leading dash and brackets in case of tasks
+ * @returns parsable event object with set title, start/end/rrule properties, or null if any errors
+ */
+export function parseListItem(raw: string): Record<any, any> | null {
 	const momentParse = (input: string) => window.moment(input, window.moment.ISO_8601, true);
 	const momentParseDur = (input: string) => window.moment.duration(input);
 
@@ -61,6 +62,7 @@ export function parseListItem(raw: string): {
 					return null;
 				}
 
+				// TODO: remove this when event highlighting is added and let user decide if its right
 				// check if read properly, as it gives some weird results otherwise
 				if (timeParts[1] != rrule.toText())
 					return null;
@@ -72,27 +74,30 @@ export function parseListItem(raw: string): {
 			return null;
 
 		if (rrule != null) {
-			// has to have a start otherwise it will always be from right now
-			rrule.origOptions.dtstart = start.toDate();
 			return {
+				title: leftover,
 				start: start.toDate(),
-				rrule: rrule.options,
-				leftover: leftover,
+				rrule: {
+					...rrule.options,
+
+					// set the starting date for recurrance
+					dtstart: start.toDate(),
+				},
 			}
 		}
 
 		if (end == null)
 			return {
+				title: leftover,
 				start: start.toDate(),
 				end: start.clone().set('hours', 24).set('minutes', 0).set('seconds', 0).toDate(),
-				leftover: leftover,
 			}
 
 		if (window.moment.isDuration(end))
 			return {
+				title: leftover,
 				start: start.toDate(),
 				end: start.clone().add(end).toDate(),
-				leftover: leftover,
 			}
 
 		// making it inclusive of the end date
@@ -100,40 +105,48 @@ export function parseListItem(raw: string): {
 			end.set('hours', 24);
 
 		return {
+			title: leftover,
 			start: start.toDate(),
 			end: end.toDate(),
-			leftover: leftover,
 		}
 	}
 
 	return null;
 }
 
-export async function extractListItems(files: TFile[]): Promise<Map<TFile, [ListItemCache, string][]>> {
+export async function extractListItems(files: TFile[]): Promise<{
+	file: TFile,
+	fileCache: CachedMetadata,
+	listItems: [ListItemCache, string][],
+}[]> {
 	const fileContents = await readFilesCached(files);
 
-	var items = new Map<TFile, [ListItemCache, string][]>();
+	var items: any[] = [];
 
 	// extract each item as string
 	fileContents.forEach((contents, file) => {
 		const cache = app.metadataCache.getFileCache(file);
 
-		if (cache == null || cache.listItems == null)
+		if (cache == null || cache.listItems == null || cache.listItems.length == 0)
 			return;
 
-		items.set(file, cache.listItems.map(item => {
-			// all list items start with '- '
-			var offset = 2;
+		items.push({
+			file: file,
+			fileCache: cache,
+			listItems: cache.listItems.map(item => {
+				// all list items start with '- '
+				var offset = 2;
 
-			// remove the '[ ] ' from the task, you can use cache task property to check type
-			if (item.task != null)
-				offset += 4;
+				// remove the '[ ] ' from the task, you can use cache task property to check type
+				if (item.task != null)
+					offset += 4;
 
-			return [
-				item,
-				contents.substring(item.position.start.offset + offset, item.position.end.offset).trim()
-			];
-		}));
+				return [
+					item,
+					contents.substring(item.position.start.offset + offset, item.position.end.offset).trim()
+				];
+			}),
+		});
 	});
 
 	return items;

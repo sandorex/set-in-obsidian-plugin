@@ -1,0 +1,72 @@
+/* (https://github.com/davish/obsidian-full-calendar/blob/91f758efccbf58d1bed94b9729840a803d870304/src/ui/overrides.css)
+Styling taken from davish/obsidian-full-calendar plugin
+Modified by Sandorex 2022
+Licensed under MIT License
+
+EVERYTHING MUST BE IN .set-in-obsidian-timeline SO THAT ANY OTHER PLUGIN IS NOT AFFECTED
+*/
+
+.is-phone .set-in-obsidian-timeline {
+	height: calc(100% - 4rem);
+}
+
+.set-in-obsidian-timeline {
+	height: 90%;
+    width: calc(100% - 20px);
+    margin-left: auto;
+    margin-right: auto;
+    padding-bottom: 30px;
+
+	--fc-button-text-color: var(--text-normal);
+	--fc-button-bg-color: var(--interactive-normal);
+	--fc-button-border-color: var(--interactive-normal);
+
+	--fc-button-hover-bg-color: var(--interactive-hover);
+	--fc-button-hover-border-color: var(--interactive-hover);
+
+	--fc-button-active-border-color: var(--interactive-accent);
+	--fc-button-active-bg-color: var(--interactive-accent);
+
+	--fc-event-border-color: var(--interactive-accent);
+	--fc-event-bg-color: var(--interactive-accent);
+	--fc-event-text-color: var(--text-on-accent);
+
+	--fc-list-event-hover-bg-color: var(--background-secondary);
+	--fc-neutral-bg-color: var(--background-primary-alt);
+
+	--fc-page-bg-color: var(--background-primary);
+	--fc-border-color: var(--background-modifier-border);
+
+	--fc-now-indicator-color: var(--text-error-hover);
+
+	--fc-more-link-bg-color: var(--background-primary-alt);
+	--fc-more-link-text-color: var(--text-accent);
+
+	--fc-today-bg-color: var(--background-modifier-cover);
+
+	--fc-neutral-text-color: var(--text-muted);
+	--fc-neutral-bg-color: var(--interactive-normal);
+
+	--fc-highlight-color: var(--text-highlight-bg);
+	--fc-bg-event-color: var(--background-modifier-success);
+	--fc-non-business-color: var(--background-modifier-box-shadow);
+}
+
+.set-in-obsidian-timeline a {
+	text-decoration-line: none;
+}
+
+.set-in-obsidian-timeline .fc-header-toolbar {
+    margin-bottom: 15px !important;
+}
+
+.set-in-obsidian-timeline .fc-button-active {
+	color: var(--text-on-accent) !important;
+}
+
+.set-in-obsidian-timeline .fc-button {
+	border: 0px solid transparent !important;
+	line-height: 1 !important;
+	padding: var(--size-4-1) var(--size-4-3) !important;
+    line-height: 1 !important;
+}
