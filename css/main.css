@@ -11,3 +11,24 @@
     height: 100%;
     margin-top: 15px;
 }
+
+.set-in-obsidian-developer-settings .setting-item-description {
+    color: rgb(170, 0, 0);
+    font-weight: bold;
+}
+
+.set-in-obsidian-fullcalendar-options textarea {
+    resize: none;
+    height: 100%;
+    width: 100%;
+    min-height: 100px;
+    min-width: 300px;
+}
+
+.set-in-obsidian-success {
+    border-color: lightgreen;
+}
+
+.set-in-obsidian-fail {
+    border-color: red;
+}

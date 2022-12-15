@@ -23,15 +23,6 @@ import rrulePlugin from '@fullcalendar/rrule';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
 export const CALENDAR_OPTIONS: CalendarOptions = {
-	schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
-	initialView: 'listWeek',
-	plugins: [
-		dayGridPlugin,
-		listPlugin,
-		timeGridPlugin,
-		resourceTimelinePlugin,
-		rrulePlugin
-	],
 	views: {
 		timeGridDay: {
 			slotDuration: createDuration(30, 'minute'),
@@ -51,7 +42,6 @@ export const CALENDAR_OPTIONS: CalendarOptions = {
 		week: 'Week',
 		list: 'List',
 	},
-	eventSources: [],
 	eventTimeFormat: {
 		hour12: false,
 		hour: '2-digit',
@@ -63,3 +53,18 @@ export const CALENDAR_OPTIONS: CalendarOptions = {
 		minute: '2-digit'
 	}
 };
+
+/**
+ * Calendar options that are applied after user options
+ */
+export const CALENDAR_OPTIONS_AFTER: CalendarOptions = {
+	schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+	plugins: [
+		dayGridPlugin,
+		listPlugin,
+		timeGridPlugin,
+		resourceTimelinePlugin,
+		rrulePlugin
+	],
+	eventSources: [],
+}

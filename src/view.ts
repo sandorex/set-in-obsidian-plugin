@@ -16,7 +16,7 @@
 
 import { Calendar } from '@fullcalendar/core';
 import { EditorPosition, EventRef, MarkdownView, Notice, Platform, TFile, View, WorkspaceLeaf } from 'obsidian';
-import { CALENDAR_OPTIONS } from './calendar_options';
+import { CALENDAR_OPTIONS, CALENDAR_OPTIONS_AFTER } from './calendar_options';
 import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from './main';
 import { extractListItems, parseListItem } from './parser';
 
@@ -120,7 +120,18 @@ export class TimelineView extends View {
 			var currentRange = wrapper.createEl('h4', { text: 'UNDEFINED' });
 
 			wrapper.createDiv({ cls: 'set-in-obsidian-timeline', }, elem => {
-				var options = CALENDAR_OPTIONS;
+				var options = {
+					// overridable defaults
+					...CALENDAR_OPTIONS,
+
+					// user provided overrides
+					...this.plugin.settings.calendarOverrideOptions,
+
+					// defaults that should not be changed
+					...CALENDAR_OPTIONS_AFTER,
+				};
+
+				options.initialView = this.plugin.settings.defaultView;
 
 				// gather events from this class as a source
 				options.eventSources?.push(
@@ -184,7 +195,7 @@ export class TimelineView extends View {
 
 			// NOTE: does fire on renames contrary to 'changed'
 			this.resolvedEventRef = app.metadataCache.on('resolved', async () => await this.update());
-		} else if (this.resolvedEventRef != null) {
+		} else if (!this.isVisible() && this.resolvedEventRef != null) {
 			app.metadataCache.offref(this.resolvedEventRef);
 			this.resolvedEventRef = null;
 		}

@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import type moment from 'moment';
 import { Plugin, WorkspaceLeaf } from 'obsidian';
+import { DEFAULT_SETTINGS, SetInObsidianSettings, SetInObsidianSettingsTab } from './settings';
 import { TimelineView } from './view';
 
-import type moment from 'moment';
 declare global {
 	interface Window {
 		moment: typeof moment;
@@ -28,48 +29,64 @@ export const TIMELINE_VIEW_TYPE = 'set-in-obsidian-timeline';
 export const TIMELINE_VIEW_ICON = 'calendar-clock';
 
 export default class SetInObsidianPlugin extends Plugin {
-	timelineView?: TimelineView;
+	settings: SetInObsidianSettings;
 
 	async onload() {
+		await this.loadSettings();
+
+		if (this.calendarOverideModified())
+			console.log("set-in-obsidian plugin calendar options modified, beware");
+
 		this.registerView(TIMELINE_VIEW_TYPE, leaf => new TimelineView(leaf, this));
-		this.addRibbonIcon(TIMELINE_VIEW_ICON, 'SIO Timeline', () => this.revealView());
+		this.addSettingTab(new SetInObsidianSettingsTab(this.app, this));
+
+		this.addCommand({
+			id: 'set-in-obsidian-timeline',
+			name: 'Show Timeline',
+			callback: () => this.revealView(true)
+		});
+
+		if (this.settings.showRibbonIcon)
+			this.addRibbonIcon(TIMELINE_VIEW_ICON, 'SIO Timeline', async () => await this.revealView());
+
+		if (this.settings.openTimelineOnStartup)
+			this.app.workspace.onLayoutReady(() => this.revealView(false));
 	}
 
-	async revealView() {
+	calendarOverideModified(): boolean {
+		return Object.keys(this.settings.calendarOverrideOptions).length != 0;
+	}
+
+	// TODO: this function takes a really long time for some reason
+	async revealView(reveal: boolean = true) {
 		var leaf = this.getTimelineLeaf();
 		if (leaf == null) {
 			// create it if it does not exist already
 			await this.app.workspace.getRightLeaf(false).setViewState({
 				type: TIMELINE_VIEW_TYPE,
-				active: true,
+				active: reveal,
 			});
-		}
-
-		leaf = this.getTimelineLeaf();
-		if (leaf != null)
+		} else if (reveal)
 			this.app.workspace.revealLeaf(leaf);
 	}
 
-	getTimelineLeaf(): WorkspaceLeaf | null {
-		// there should only ever be one
-		var leafs = this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE);
-
-		if (leafs.length == 0)
-			return null;
-
-		return leafs[0];
+	getTimelineLeaf(): WorkspaceLeaf | undefined {
+		return this.app.workspace.getLeavesOfType(TIMELINE_VIEW_TYPE)[0];
 	}
 
 	getTimelineView(): TimelineView | null {
-		var leaf = this.getTimelineLeaf();
-
-		if (leaf == null)
-			return null;
-
-		return leaf.view as TimelineView;
+		return this.getTimelineLeaf()?.view as TimelineView;
 	}
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(TIMELINE_VIEW_TYPE);
+	}
+
+	async loadSettings() {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 }
