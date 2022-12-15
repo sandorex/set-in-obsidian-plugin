@@ -1,7 +1,7 @@
 {
 	"id": "set-in-obsidian",
 	"name": "Set In Obsidian",
-	"version": "1.0.10",
+	"version": "1.0.11",
 	"minAppVersion": "1.0.0",
 	"description": "Plugin for time planning",
 	"author": "Sandorex",
