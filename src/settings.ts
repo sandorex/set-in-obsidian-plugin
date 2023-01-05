@@ -1,5 +1,5 @@
 // sandorex/set-in-obsidian-plugin
-// Copyright (C) 2022 Aleksandar Radivojević
+// Copyright (C) 2022-2023 Aleksandar Radivojević
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ import SetInObsidianPlugin from './main';
 
 export interface SetInObsidianSettings {
 	openTimelineOnStartup: boolean;
-	showRibbonIcon: boolean;
 	useTimeline: boolean;
 	defaultView: string;
 	defaultEventColor: string;
@@ -32,7 +31,6 @@ export interface SetInObsidianSettings {
 
 export const DEFAULT_SETTINGS: SetInObsidianSettings = {
 	openTimelineOnStartup: true,
-	showRibbonIcon: true,
 	useTimeline: false,
 	defaultView: 'listWeek',
 	defaultEventColor: '#7d5bed',
@@ -62,7 +60,6 @@ export class SetInObsidianSettingsTab extends PluginSettingTab {
 			text: 'Set In Obsidian Plugin Settings'
 		});
 
-
 		new Setting(containerEl)
 			.setName('Open Timeline On Startup')
 			.setDesc('Opens timeline on startup in background, it makes opening it faster but may lag the application a bit')
@@ -74,28 +71,16 @@ export class SetInObsidianSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}));
 
+		// new Setting(containerEl)
+		// 	.setName('Horizontal Timeline')
+		// 	.setDesc('Uses timeline view instead of timeGrid view')
+		// 	.addToggle(btn =>
+		// 		btn.setValue(this.plugin.settings.useTimeline)
+		// 			.onChange(async value => {
+		// 				this.plugin.settings.useTimeline = value;
 
-		new Setting(containerEl)
-			.setName('Show Timeline Ribbon Icon')
-			.setDesc('Shows ribbon icon to open the timeline view, you can always open the timeline with the command')
-			.addToggle(btn =>
-				btn.setValue(this.plugin.settings.showRibbonIcon)
-					.onChange(async value => {
-						this.plugin.settings.showRibbonIcon = value;
-
-						await this.plugin.saveSettings();
-					}));
-
-		new Setting(containerEl)
-			.setName('Horizontal Timeline')
-			.setDesc('Uses timeline view instead of timeGrid view')
-			.addToggle(btn =>
-				btn.setValue(this.plugin.settings.useTimeline)
-					.onChange(async value => {
-						this.plugin.settings.useTimeline = value;
-
-						await this.plugin.saveSettings();
-					}));
+		// 				await this.plugin.saveSettings();
+		// 			}));
 
 		// new Setting(containerEl)
 		// 	.setName('Default FullCalendar View')
@@ -123,7 +108,7 @@ export class SetInObsidianSettingsTab extends PluginSettingTab {
 		// 		});
 		// 	});
 
-		var eventColorSetting = new Setting(containerEl)
+		let eventColorSetting = new Setting(containerEl)
 			.setName('Default Event Color');
 
 		eventColorSetting.addColorPicker(cp => {

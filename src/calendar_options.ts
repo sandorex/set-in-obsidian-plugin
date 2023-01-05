@@ -28,6 +28,7 @@ export const CALENDAR_OPTIONS: CalendarOptions = {
 			slotDuration: createDuration(30, 'minute'),
 		}
 	},
+	expandRows: true,
 	allDaySlot: false,
 	nowIndicator: true,
 	headerToolbar: {

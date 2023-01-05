@@ -1,5 +1,5 @@
 // sandorex/set-in-obsidian-plugin
-// Copyright (C) 2022 Aleksandar Radivojević
+// Copyright (C) 2022-2023 Aleksandar Radivojević
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@ declare global {
 	}
 }
 
+export const FILE_SIZE_LIMIT = 5_000_000; // 5mb
+
 export const TIMELINE_VIEW_TYPE = 'set-in-obsidian-timeline';
 export const TIMELINE_VIEW_ICON = 'calendar-clock';
 
@@ -34,7 +36,7 @@ export default class SetInObsidianPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		if (this.calendarOverideModified())
+		if (this.calendarOverrideModified())
 			console.log("set-in-obsidian plugin calendar options modified, beware");
 
 		this.registerView(TIMELINE_VIEW_TYPE, leaf => new TimelineView(leaf, this));
@@ -46,20 +48,18 @@ export default class SetInObsidianPlugin extends Plugin {
 			callback: () => this.revealView(true)
 		});
 
-		if (this.settings.showRibbonIcon)
-			this.addRibbonIcon(TIMELINE_VIEW_ICON, 'SIO Timeline', async () => await this.revealView());
+		this.addRibbonIcon(TIMELINE_VIEW_ICON, 'SIO Timeline', async () => await this.revealView());
 
 		if (this.settings.openTimelineOnStartup)
 			this.app.workspace.onLayoutReady(() => this.revealView(false));
 	}
 
-	calendarOverideModified(): boolean {
+	calendarOverrideModified(): boolean {
 		return Object.keys(this.settings.calendarOverrideOptions).length != 0;
 	}
 
-	// TODO: this function takes a really long time for some reason
 	async revealView(reveal: boolean = true) {
-		var leaf = this.getTimelineLeaf();
+		const leaf = this.getTimelineLeaf();
 		if (leaf == null) {
 			// create it if it does not exist already
 			await this.app.workspace.getRightLeaf(false).setViewState({

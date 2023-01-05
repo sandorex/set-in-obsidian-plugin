@@ -1,5 +1,5 @@
 // sandorex/set-in-obsidian-plugin
-// Copyright (C) 2022 Aleksandar Radivojević
+// Copyright (C) 2022-2023 Aleksandar Radivojević
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 import { CachedMetadata, ListItemCache, TFile } from 'obsidian';
 import { RRule } from 'rrule';
+import { FILE_SIZE_LIMIT } from './main';
 
 /**
  * Generator that chains two arrays together into one generator
@@ -35,6 +36,33 @@ async function readFilesCached(files: TFile[]): Promise<Map<TFile, String>> {
 }
 
 /**
+ * Filters files by removing files without list items, files that are too large and some special cases
+ */
+export function filterMarkdownFiles(files: TFile[]): TFile[] {
+	return files.filter(file => {
+		// restrict file size
+		if (file.stat.size > FILE_SIZE_LIMIT)
+			return false;
+
+		const cache = app.metadataCache.getFileCache(file);
+
+		// if it does not have any list items it's useless
+		if (cache?.listItems && cache.listItems.length <= 0)
+			return false;
+
+		// explicitly ignored files, could be useful for huge files
+		if (cache?.frontmatter?.['set-in-obsidian-ignore'] == true)
+			return false;
+
+		// excalidraw files can be pretty huge so ignore them as well
+		if (cache?.frontmatter?.['excalidraw-plugin'] !== undefined)
+			return false;
+
+		return true;
+	});
+}
+
+/**
  * Parses list item into an event
  * @param raw raw list item without the leading dash and brackets in case of tasks
  * @returns parsable event object with set title, start/end/rrule properties, or null if any errors
@@ -44,23 +72,23 @@ export function parseListItem(raw: string): Record<any, any> | null {
 	const momentParseDur = (input: string) => window.moment.duration(input);
 
 	if (raw.startsWith('`')) {
-		var index = raw.indexOf('`', 1);
+		const index = raw.indexOf('`', 1);
 		if (index == -1)
 			return null;
 
 		const leftover = raw.substring(index + 1).trim();
 
-		var start = null;
-		var end = null;
-		var rrule: RRule | null = null;
+		let start = null;
+		let end = null;
+		let rrule: RRule | null = null;
 
-		var timeRaw = raw.substring(1, index);
+		const timeRaw = raw.substring(1, index);
 		if (timeRaw.contains(' ')) {
 			// split but keep the leftovers
 			const timeParts = timeRaw.split(/ (.*)/s);
 			start = momentParse(timeParts[0]);
 
-			var ch = timeParts[1].at(0);
+			const ch = timeParts[1].at(0);
 			if (ch == null)
 				return null;
 
@@ -137,7 +165,7 @@ export async function extractListItems(files: TFile[]): Promise<{
 }[]> {
 	const fileContents = await readFilesCached(files);
 
-	var items: any[] = [];
+	let items: any[] = [];
 
 	// extract each item as string
 	fileContents.forEach((contents, file) => {
@@ -151,7 +179,7 @@ export async function extractListItems(files: TFile[]): Promise<{
 			fileCache: cache,
 			listItems: cache.listItems.map(item => {
 				// all list items start with '- '
-				var offset = 2;
+				let offset = 2;
 
 				// remove the '[ ] ' from the task, you can use cache task property to check type
 				if (item.task != null)

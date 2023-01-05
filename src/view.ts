@@ -1,5 +1,5 @@
 // sandorex/set-in-obsidian-plugin
-// Copyright (C) 2022 Aleksandar Radivojević
+// Copyright (C) 2022-2023 Aleksandar Radivojević
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,14 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { Calendar } from '@fullcalendar/core';
-import { EditorPosition, EventRef, MarkdownView, Notice, Platform, TFile, View, WorkspaceLeaf } from 'obsidian';
+import { EditorPosition, EventRef, ItemView, MarkdownView, Notice, Platform, WorkspaceLeaf } from 'obsidian';
 import { CALENDAR_OPTIONS, CALENDAR_OPTIONS_AFTER } from './calendar_options';
 import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from './main';
-import { extractListItems, parseListItem } from './parser';
+import { extractListItems, filterMarkdownFiles, parseListItem } from './parser';
 
-const FILE_SIZE_LIMIT = 5_000_000; // 5mb
-
-export class TimelineView extends View {
+export class TimelineView extends ItemView {
 	private resolvedEventRef: EventRef | null;
 
 	plugin: SetInObsidianPlugin;
@@ -40,35 +38,8 @@ export class TimelineView extends View {
 		this.icon = TIMELINE_VIEW_ICON;
 	}
 
-	/**
-	 * Filters files by removing files without list items, files that are too large and some special cases
-	 */
-	filterMarkdownFiles(files: TFile[]): TFile[] {
-		return files.filter(file => {
-			// restrict file size
-			if (file.stat.size > FILE_SIZE_LIMIT)
-				return false;
-
-			const cache = app.metadataCache.getFileCache(file);
-
-			// if it does not have any list items it's useless
-			if (cache?.listItems && cache.listItems.length <= 0)
-				return false;
-
-			// explicitly ignored files, could be useful for huge files
-			if (cache?.frontmatter?.['set-in-obsidian-ignore'] == true)
-				return false;
-
-			// excalidraw files can be pretty huge so ignore them as well
-			if (cache?.frontmatter?.['excalidraw-plugin'] !== undefined)
-				return false;
-
-			return true;
-		});
-	}
-
 	async getListItemsFromFiles() {
-		return extractListItems(this.filterMarkdownFiles(this.app.vault.getMarkdownFiles()));
+		return extractListItems(filterMarkdownFiles(this.app.vault.getMarkdownFiles()));
 	}
 
 	/**
@@ -77,7 +48,7 @@ export class TimelineView extends View {
 	async gatherEvents(): Promise<Record<any, any>[]> {
 		const listItemFiles = await this.getListItemsFromFiles();
 
-		var events: Record<any, any>[] = [];
+		let events: Record<any, any>[] = [];
 
 		for (const file of listItemFiles) {
 			for (const [metadata, rawText] of file.listItems) {
@@ -88,7 +59,7 @@ export class TimelineView extends View {
 
 				// TODO: color done tasks, but only border or text so that rrule tasks can be different
 
-				var event: Record<any, any> = {
+				const event: Record<any, any> = {
 					...results,
 
 					// NOTE: these are used to open the file where the event was found
@@ -117,10 +88,10 @@ export class TimelineView extends View {
 
 		// the calendar is contained inside the wrapper so it overflows and you can scroll
 		this.containerEl.createDiv({ cls: 'set-in-obsidian-wrapper', }, wrapper => {
-			var currentRange = wrapper.createEl('h4', { text: 'UNDEFINED' });
+			const currentRange = wrapper.createEl('h4', { text: 'UNDEFINED' });
 
 			wrapper.createDiv({ cls: 'set-in-obsidian-timeline', }, elem => {
-				var options = {
+				const options = {
 					// overridable defaults
 					...CALENDAR_OPTIONS,
 
@@ -149,10 +120,10 @@ export class TimelineView extends View {
 
 					// require ctrl to open the file only on desktop
 					if (arg.jsEvent.ctrlKey || Platform.isMobile) {
-						var leaf = app.workspace.getLeaf('tab');
+						const leaf = app.workspace.getLeaf('tab');
 						await leaf.openFile(file);
 
-						var view = leaf.view as MarkdownView;
+						const view = leaf.view as MarkdownView;
 						view.editor.setCursor({ line: line, ch: col } as EditorPosition);
 						view.editor.scrollIntoView({
 							from: { line: - 1, ch: col },
@@ -174,7 +145,7 @@ export class TimelineView extends View {
 			app.metadataCache.offref(this.resolvedEventRef);
 	}
 
-	async update(): Promise<void> {
+	update() {
 		// TODO: add debug option to monitor number of updates just in case
 		this.calendar?.refetchEvents();
 	}
@@ -189,12 +160,16 @@ export class TimelineView extends View {
 	}
 
 	onResize(): void {
+		// force calendar to resize
+		if (this.isVisible())
+			this.calendar?.setOption('aspectRatio', this.calendar?.getOption('aspectRatio'));
+
 		// NOTE: update when files change only if the view becomes visible again
 		if (this.isVisible() && this.resolvedEventRef == null) {
 			this.update();
 
 			// NOTE: does fire on renames contrary to 'changed'
-			this.resolvedEventRef = app.metadataCache.on('resolved', async () => await this.update());
+			this.resolvedEventRef = app.metadataCache.on('resolved', () => this.update());
 		} else if (!this.isVisible() && this.resolvedEventRef != null) {
 			app.metadataCache.offref(this.resolvedEventRef);
 			this.resolvedEventRef = null;
