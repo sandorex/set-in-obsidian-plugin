@@ -1,6 +1,6 @@
 {
 	"name": "set-in-obsidian",
-	"version": "1.0.12",
+	"version": "1.0.13",
 	"description": "Plugin for time planning",
 	"main": "main.js",
 	"scripts": {
