@@ -16,6 +16,7 @@
 
 import { CachedMetadata, ListItemCache, TFile } from 'obsidian';
 import { RRule } from 'rrule';
+import { ECALENDAR_OPTIONS_CUSTOM, ECALENDAR_OPTIONS_DEFAULTS, ECALENDAR_OPTIONS_MINIMAL, EmbeddedCalendarMode, EmbeddedCalendarOptions } from './calendar';
 import { FILE_SIZE_LIMIT } from './main';
 
 /**
@@ -38,7 +39,7 @@ async function readFilesCached(files: TFile[]): Promise<Map<TFile, String>> {
 /**
  * Filters files by removing files without list items, files that are too large and some special cases
  */
-export function filterMarkdownFiles(files: TFile[]): TFile[] {
+function filterMarkdownFiles(files: TFile[]): TFile[] {
 	return files.filter(file => {
 		// restrict file size
 		if (file.stat.size > FILE_SIZE_LIMIT)
@@ -67,7 +68,12 @@ export function filterMarkdownFiles(files: TFile[]): TFile[] {
  * @param raw raw list item without the leading dash and brackets in case of tasks
  * @returns parsable event object with set title, start/end/rrule properties, or null if any errors
  */
-export function parseListItem(raw: string): Record<any, any> | null {
+export function parseListItem(raw: string): {
+	title: string,
+	start: Date,
+	end?: Date,
+	rrule?: Record<any, any>
+} | null {
 	const momentParse = (input: string) => window.moment(input, window.moment.ISO_8601, true);
 	const momentParseDur = (input: string) => window.moment.duration(input);
 
@@ -158,7 +164,7 @@ export function parseListItem(raw: string): Record<any, any> | null {
 	return null;
 }
 
-export async function extractListItems(files: TFile[]): Promise<{
+async function extractListItems(files: TFile[]): Promise<{
 	file: TFile,
 	fileCache: CachedMetadata,
 	listItems: [ListItemCache, string][],
@@ -194,4 +200,81 @@ export async function extractListItems(files: TFile[]): Promise<{
 	});
 
 	return items;
+}
+
+export async function gatherEventsFromFiles(files: TFile[], filter = true): Promise<Record<any, any>[]> {
+	const listItemFiles = await extractListItems(filter ? filterMarkdownFiles(files) : files);
+
+	let events: Record<any, any>[] = [];
+
+	for (const file of listItemFiles) {
+		for (const [metadata, rawText] of file.listItems) {
+			const results = parseListItem(rawText);
+
+			if (results == null)
+				continue;
+
+			// TODO: color done tasks, but only border or text so that rrule tasks can be different
+
+			const event: Record<any, any> = {
+				...results,
+
+				// NOTE: these are used to open the file where the event was found
+				extendedProps: {
+					file: file.file,
+					line: metadata.position.start.line,
+					col: metadata.position.start.col
+				}
+			};
+
+			if (event.rrule != null)
+				event.color = '#eb8d1a'; // TODO: set the colors in options
+
+			if (file.fileCache.frontmatter?.['set-in-obsidian-color'] != null)
+				event.color = file.fileCache.frontmatter['set-in-obsidian-color'];
+
+			events.push(event);
+		}
+	}
+
+	return events;
+}
+
+/**
+ * Gathers all global events, filtered
+ */
+export async function gatherGlobalEvents(..._args: any): Promise<Record<any, any>[]> {
+	return gatherEventsFromFiles(app.vault.getMarkdownFiles(), true);
+}
+
+/**
+ * Parses JSON embedded options and sets defaults depending on the mode, returns a string on error
+ */
+export function parseEmbeddedOptions(mode: EmbeddedCalendarMode, str: string): EmbeddedCalendarOptions | string {
+	let data: Record<any, any>;
+
+	switch (mode) {
+		case EmbeddedCalendarMode.CUSTOM:
+			data = ECALENDAR_OPTIONS_CUSTOM;
+			break;
+
+		case EmbeddedCalendarMode.MINIMAL:
+			data = ECALENDAR_OPTIONS_MINIMAL;
+			break;
+
+		default:
+			data = ECALENDAR_OPTIONS_DEFAULTS;
+			break;
+	}
+
+	try {
+		data = {
+			...data,
+			...JSON.parse(str)
+		};
+	} catch (error) {
+		return `Error parsing options: ${error}`;
+	}
+
+	return data as EmbeddedCalendarOptions;
 }

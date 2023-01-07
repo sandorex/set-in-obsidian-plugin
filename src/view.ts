@@ -14,100 +14,46 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Calendar } from '@fullcalendar/core';
+import { Calendar, CalendarOptions } from '@fullcalendar/core';
 import { EditorPosition, EventRef, ItemView, MarkdownView, Notice, Platform, WorkspaceLeaf } from 'obsidian';
-import { CALENDAR_OPTIONS, CALENDAR_OPTIONS_AFTER } from './calendar_options';
-import SetInObsidianPlugin, { TIMELINE_VIEW_ICON, TIMELINE_VIEW_TYPE } from './main';
-import { extractListItems, filterMarkdownFiles, parseListItem } from './parser';
+import { CALENDAR_OPTIONS, CALENDAR_OPTIONS_AFTER } from './calendar';
+import SetInObsidianPlugin, { CALENDAR_VIEW_ICON, CALENDAR_VIEW_TYPE } from './main';
+import { gatherGlobalEvents } from './parser';
 
-export class TimelineView extends ItemView {
+export class CalendarView extends ItemView {
 	private resolvedEventRef: EventRef | null;
 
 	plugin: SetInObsidianPlugin;
-
-	/**
-	 * @public
-	 * The instance of fullcalendar
-	 */
-	calendar: Calendar | null;
+	fullcalendar: Calendar | null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: SetInObsidianPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 		this.navigation = true;
-		this.icon = TIMELINE_VIEW_ICON;
-	}
-
-	async getListItemsFromFiles() {
-		return extractListItems(filterMarkdownFiles(this.app.vault.getMarkdownFiles()));
-	}
-
-	/**
-	 * @returns all events from filtered files
-	 */
-	async gatherEvents(): Promise<Record<any, any>[]> {
-		const listItemFiles = await this.getListItemsFromFiles();
-
-		let events: Record<any, any>[] = [];
-
-		for (const file of listItemFiles) {
-			for (const [metadata, rawText] of file.listItems) {
-				const results = parseListItem(rawText);
-
-				if (results == null)
-					continue;
-
-				// TODO: color done tasks, but only border or text so that rrule tasks can be different
-
-				const event: Record<any, any> = {
-					...results,
-
-					// NOTE: these are used to open the file where the event was found
-					extendedProps: {
-						file: file.file,
-						line: metadata.position.start.line,
-						col: metadata.position.start.col
-					}
-				};
-
-				if (event.rrule != null)
-					event.color = '#eb8d1a'; // TODO: set the colors in options
-
-				if (file.fileCache.frontmatter?.['set-in-obsidian-color'] != null)
-					event.color = file.fileCache.frontmatter['set-in-obsidian-color'];
-
-				events.push(event);
-			}
-		}
-
-		return events;
+		this.icon = CALENDAR_VIEW_ICON;
 	}
 
 	async onOpen(): Promise<void> {
 		this.containerEl.empty();
 
 		// the calendar is contained inside the wrapper so it overflows and you can scroll
-		this.containerEl.createDiv({ cls: 'set-in-obsidian-wrapper', }, wrapper => {
+		this.containerEl.createDiv({ cls: ['set-in-obsidian-wrapper', 'set-in-obsidian-wrapper-view'], }, wrapper => {
 			const currentRange = wrapper.createEl('h4', { text: 'UNDEFINED' });
 
 			wrapper.createDiv({ cls: 'set-in-obsidian-timeline', }, elem => {
-				const options = {
-					// overridable defaults
+				let options: CalendarOptions = {
 					...CALENDAR_OPTIONS,
-
-					// user provided overrides
 					...this.plugin.settings.calendarOverrideOptions,
-
-					// defaults that should not be changed
-					...CALENDAR_OPTIONS_AFTER,
+					...CALENDAR_OPTIONS_AFTER
 				};
 
 				options.initialView = this.plugin.settings.defaultView;
 
-				// gather events from this class as a source
-				options.eventSources?.push(
-					async (_info, _successCallback, _failureCallback) => this.gatherEvents()
-				);
+				// gather globla events and use external sources
+				options.eventSources = [
+					gatherGlobalEvents,
+					this.plugin.externalSources
+				];
 
 				// update the range header
 				options.datesSet = (info) => currentRange.setText(info.view.title);
@@ -134,8 +80,8 @@ export class TimelineView extends ItemView {
 						new Notice(arg.event.title);
 				};
 
-				this.calendar = new Calendar(elem, options);
-				this.calendar.render();
+				this.fullcalendar = new Calendar(elem, options);
+				this.fullcalendar.render();
 			});
 		});
 	}
@@ -145,14 +91,6 @@ export class TimelineView extends ItemView {
 			app.metadataCache.offref(this.resolvedEventRef);
 	}
 
-	update() {
-		// TODO: add debug option to monitor number of updates just in case
-		this.calendar?.refetchEvents();
-	}
-
-	/**
-	 * @returns is the view visible to the user
-	 */
 	private isVisible(): boolean {
 		// i have no idea how this works but it does
 		// source: https://stackoverflow.com/a/21696585
@@ -162,14 +100,14 @@ export class TimelineView extends ItemView {
 	onResize(): void {
 		// force calendar to resize
 		if (this.isVisible())
-			this.calendar?.setOption('aspectRatio', this.calendar?.getOption('aspectRatio'));
+			this.fullcalendar?.setOption('aspectRatio', this.fullcalendar?.getOption('aspectRatio'));
 
 		// NOTE: update when files change only if the view becomes visible again
 		if (this.isVisible() && this.resolvedEventRef == null) {
-			this.update();
+			this.fullcalendar?.refetchEvents();
 
 			// NOTE: does fire on renames contrary to 'changed'
-			this.resolvedEventRef = app.metadataCache.on('resolved', () => this.update());
+			this.resolvedEventRef = app.metadataCache.on('resolved', () => this.fullcalendar?.refetchEvents());
 		} else if (!this.isVisible() && this.resolvedEventRef != null) {
 			app.metadataCache.offref(this.resolvedEventRef);
 			this.resolvedEventRef = null;
@@ -177,10 +115,10 @@ export class TimelineView extends ItemView {
 	}
 
 	getViewType(): string {
-		return TIMELINE_VIEW_TYPE;
+		return CALENDAR_VIEW_TYPE;
 	}
 
 	getDisplayText(): string {
-		return 'SIO Timeline';
+		return 'SIO Calendar';
 	}
 }

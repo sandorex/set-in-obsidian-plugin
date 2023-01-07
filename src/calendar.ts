@@ -22,6 +22,9 @@ import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import rrulePlugin from '@fullcalendar/rrule';
 import timeGridPlugin from '@fullcalendar/timegrid';
 
+/**
+ * Options for FullCalendar, always applied before user provided options as defaults
+ */
 export const CALENDAR_OPTIONS: CalendarOptions = {
 	views: {
 		timeGridDay: {
@@ -56,7 +59,7 @@ export const CALENDAR_OPTIONS: CalendarOptions = {
 };
 
 /**
- * Calendar options that are applied after user options
+ * Options for FullCalendar, always applied last to ensure license and plugins are set
  */
 export const CALENDAR_OPTIONS_AFTER: CalendarOptions = {
 	schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
@@ -67,5 +70,83 @@ export const CALENDAR_OPTIONS_AFTER: CalendarOptions = {
 		resourceTimelinePlugin,
 		rrulePlugin
 	],
-	eventSources: [],
 }
+
+/**
+ * Signifies different default options for FullCalendar
+ */
+export enum EmbeddedCalendarMode {
+	DEFAULT,
+	CUSTOM,
+	MINIMAL,
+}
+
+// TODO: property to show certain date range instead of showing current date
+export interface EmbeddedCalendarOptions {
+	/**
+	 * If false no date range will be shown
+	 */
+	showCurrentRange: boolean;
+
+	/**
+	 * If false no buttons will be shown
+	 */
+	showHeader: boolean;
+
+	/**
+	 * Show text instead of date range
+	 */
+	headerTitle?: string;
+
+	/**
+	 * If false only `events` and events gathered from `files` will be shown
+	 */
+	showGlobalEvents: boolean;
+
+	/**
+	 * Default view to open, if you want to embed minimal monthly calendar for example
+	 */
+	defaultView?: string;
+
+	/**
+	 * Paths to files which should be read, ignores frontmatter ignore
+	 */
+	files: string[];
+
+	/**
+	 * Get events from the file where calendar is embedded
+	 */
+	useThisFile: boolean;
+
+	/**
+	 * Events as raw string, same as task items just without the dash '-'
+	 */
+	events: string[];
+
+	/**
+	 * Raw options of FullCalendar `Calendar`
+	 */
+	fullcalendar: CalendarOptions;
+}
+
+export const ECALENDAR_OPTIONS_DEFAULTS: EmbeddedCalendarOptions = {
+	showCurrentRange: true,
+	showHeader: true,
+	showGlobalEvents: true,
+	useThisFile: false,
+	files: [],
+	events: [],
+	fullcalendar: {},
+};
+
+export const ECALENDAR_OPTIONS_CUSTOM: EmbeddedCalendarOptions = {
+	...ECALENDAR_OPTIONS_DEFAULTS,
+	showGlobalEvents: false,
+};
+
+export const ECALENDAR_OPTIONS_MINIMAL: EmbeddedCalendarOptions = {
+	...ECALENDAR_OPTIONS_DEFAULTS,
+	showCurrentRange: false,
+	showHeader: false,
+	showGlobalEvents: false,
+};

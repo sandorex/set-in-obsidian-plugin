@@ -56,11 +56,6 @@ EVERYTHING MUST BE IN .set-in-obsidian-timeline SO THAT ANY OTHER PLUGIN IS NOT 
 	text-decoration-line: none;
 }
 
-.set-in-obsidian-timeline .fc-header-toolbar,
-.set-in-obsidian-timeline .fc-footer-toolbar {
-    margin-bottom: 15px !important;
-}
-
 .set-in-obsidian-timeline .fc-button-active {
 	color: var(--text-on-accent) !important;
 }
@@ -75,4 +70,9 @@ EVERYTHING MUST BE IN .set-in-obsidian-timeline SO THAT ANY OTHER PLUGIN IS NOT 
 .set-in-obsidian-timeline .fc-timegrid-now-indicator-line,
 .set-in-obsidian-timeline .fc-timegrid-now-indicator-arrow {
     color: red;
+}
+
+.set-in-obsidian-wrapper-view .fc-header-toolbar,
+.set-in-obsidian-wrapper-view .fc-footer-toolbar {
+    margin-bottom: 15px !important;
 }
