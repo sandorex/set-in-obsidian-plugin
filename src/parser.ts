@@ -267,6 +267,10 @@ export function parseEmbeddedOptions(mode: EmbeddedCalendarMode, str: string): E
 			break;
 	}
 
+	// if empty use default options
+	if (str.trim() == "")
+		return data as EmbeddedCalendarOptions;
+
 	try {
 		data = {
 			...data,
