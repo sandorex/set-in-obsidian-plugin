@@ -78,7 +78,16 @@ wrote the CSS _(for example
 
 ## Installation
 
-**The plugin is not yet in obsidian repository**
+### Inside Obsidian
+
+You can install this plugin from within Obsidian by doing the following:
+
+- Open settings and go to `Community plugins`
+- Make sure `Safe mode` is **off**
+- Click `Browse` under `Community plugins`
+- Search for `Set In Obsidian` and click on it
+- Click `Install`
+- After it completes click `Enable`
 
 ### Manual
 
