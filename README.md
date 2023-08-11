@@ -1,7 +1,19 @@
 # Set In Obsidian Plugin
 
+```
+ _   _  ___ _____ ___ ____ _____ 
+| \ | |/ _ \_   _|_ _/ ___| ____|
+|  \| | | | || |  | | |   |  _|  
+| |\  | |_| || |  | | |___| |___ 
+|_| \_|\___/ |_| |___\____|_____|
+
+The project has been archived, its future is uncertain i do no not have the time or will to fix it, feel free to fork it
+
+```
+
 Plugin that allows time planning in obsidian
 
+> Critical content demanding immediate user attention due to potential risks.
 > **WARNING:** Plugin should be considered beta software until version 1.1.x is
 > released
 
